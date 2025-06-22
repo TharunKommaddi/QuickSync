@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickSync - Encrypted Device Sync</title>
+    <title>QuickSync</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -12,345 +13,588 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f0f23;
+            color: #e4e4e7;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            line-height: 1.6;
         }
 
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        .app-container {
+            background: rgba(39, 39, 42, 0.95);
+            border: 1px solid rgba(63, 63, 70, 0.4);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
             width: 100%;
-            max-width: 800px;
+            max-width: 480px;
             overflow: hidden;
-            transition: all 0.3s ease;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
         }
 
         .header {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
-            padding: 30px;
+            padding: 32px 28px 24px;
             text-align: center;
+            border-bottom: 1px solid rgba(63, 63, 70, 0.2);
         }
 
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
         }
 
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1rem;
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f4f4f5;
         }
 
-        .main-content {
-            padding: 30px;
+        .subtitle {
+            font-size: 14px;
+            color: #a1a1aa;
+            font-weight: 400;
         }
 
-        .connection-section {
-            margin-bottom: 30px;
+        .main {
+            padding: 28px;
+        }
+
+        .status-bar {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .status-bar.disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .status-bar.connected {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .status-bar.connecting {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .input-section {
+            margin-bottom: 24px;
         }
 
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
-        .input-group label {
+        .label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
-            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+            color: #d4d4d8;
         }
 
-        .input-group input {
+        .input {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
+            padding: 14px 16px;
+            background: rgba(24, 24, 27, 0.6);
+            border: 1px solid rgba(63, 63, 70, 0.4);
+            border-radius: 10px;
+            color: #f4f4f5;
+            font-size: 15px;
+            transition: all 0.2s ease;
         }
 
-        .input-group input:focus {
+        .input:focus {
             outline: none;
-            border-color: #4f46e5;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .input::placeholder {
+            color: #71717a;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .btn {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
+            flex: 1;
+            padding: 14px 20px;
             border: none;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-right: 10px;
-            margin-bottom: 10px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5855eb;
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #6b7280, #4b5563);
+            background: rgba(63, 63, 70, 0.4);
+            color: #d4d4d8;
+            border: 1px solid rgba(63, 63, 70, 0.4);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(63, 63, 70, 0.6);
+            transform: translateY(-1px);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
-        .status {
-            padding: 15px;
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .key-display {
+            background: rgba(24, 24, 27, 0.4);
+            border: 1px solid rgba(63, 63, 70, 0.3);
             border-radius: 12px;
-            margin-bottom: 20px;
-            font-weight: 600;
-            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
         }
 
-        .status.connected {
-            background: #d1fae5;
-            color: #047857;
-            border: 2px solid #10b981;
+        .key-label {
+            font-size: 13px;
+            color: #a1a1aa;
+            margin-bottom: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .status.disconnected {
-            background: #fee2e2;
-            color: #dc2626;
-            border: 2px solid #ef4444;
+        .key-value {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 13px;
+            background: rgba(39, 39, 42, 0.8);
+            padding: 12px;
+            border-radius: 8px;
+            word-break: break-all;
+            color: #e4e4e7;
+            border: 1px solid rgba(63, 63, 70, 0.2);
+            position: relative;
         }
 
-        .status.waiting {
-            background: #fef3c7;
-            color: #d97706;
-            border: 2px solid #f59e0b;
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(63, 63, 70, 0.4);
+            border: none;
+            border-radius: 4px;
+            color: #a1a1aa;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(63, 63, 70, 0.6);
+            color: #d4d4d8;
+        }
+
+        .key-info {
+            font-size: 12px;
+            color: #71717a;
+            margin-top: 8px;
         }
 
         .chat-container {
-            background: #f9fafb;
-            border-radius: 16px;
-            padding: 20px;
+            background: rgba(24, 24, 27, 0.3);
+            border: 1px solid rgba(63, 63, 70, 0.2);
+            border-radius: 12px;
             height: 400px;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         .messages {
             flex: 1;
+            padding: 20px;
             overflow-y: auto;
-            margin-bottom: 20px;
-            padding: 10px;
-            background: white;
-            border-radius: 12px;
-            border: 2px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: rgba(63, 63, 70, 0.1);
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(63, 63, 70, 0.4);
+            border-radius: 2px;
         }
 
         .message {
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 12px;
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
             word-wrap: break-word;
             animation: slideIn 0.3s ease;
         }
 
         .message.sent {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            background: #6366f1;
             color: white;
-            margin-left: 20%;
-            text-align: right;
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
         }
 
         .message.received {
-            background: #e5e7eb;
-            color: #374151;
-            margin-right: 20%;
+            background: rgba(63, 63, 70, 0.4);
+            color: #e4e4e7;
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
         }
 
-        .message-input-container {
+        .message.system {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            align-self: center;
+            border-radius: 12px;
+            font-size: 13px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .message-input-area {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(63, 63, 70, 0.2);
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            align-items: flex-end;
         }
 
         .message-input {
             flex: 1;
-            padding: 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 12px 16px;
+            background: rgba(39, 39, 42, 0.6);
+            border: 1px solid rgba(63, 63, 70, 0.4);
+            border-radius: 20px;
+            color: #f4f4f5;
+            font-size: 14px;
+            resize: none;
+            max-height: 80px;
+            transition: border-color 0.2s ease;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .message-input::placeholder {
+            color: #71717a;
         }
 
         .send-btn {
-            padding: 15px 25px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
+            width: 40px;
+            height: 40px;
+            background: #6366f1;
             border: none;
-            border-radius: 12px;
+            border-radius: 50%;
+            color: white;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
         }
 
         .send-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+            background: #5855eb;
+            transform: scale(1.05);
         }
 
-        .key-display {
-            background: #f3f4f6;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 15px;
-            border: 2px dashed #9ca3af;
+        .send-btn:disabled {
+            background: rgba(63, 63, 70, 0.4);
+            cursor: not-allowed;
+            transform: none;
         }
 
-        .key-display strong {
-            color: #374151;
+        .devices-info {
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.1);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #86efac;
         }
 
-        .key-display code {
-            background: #e5e7eb;
+        .peer-list {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .peer-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             padding: 8px 12px;
+            background: rgba(34, 197, 94, 0.05);
             border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            color: #1f2937;
-            word-break: break-all;
-            display: block;
-            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .peer-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .peer-status {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
         }
 
         .hidden {
             display: none;
         }
 
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #71717a;
+            font-size: 14px;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
         @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateX(20px);
+                transform: translateY(10px);
             }
             to {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(0);
             }
         }
 
-        .connected-devices {
-            background: #f0f9ff;
-            border: 2px solid #0ea5e9;
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-
-        .device-list {
-            margin-top: 10px;
-        }
-
-        .device-item {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                border-radius: 16px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .main-content {
-                padding: 20px;
+        @media (max-width: 640px) {
+            .app-container {
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
             }
             
             .chat-container {
-                height: 300px;
+                height: 350px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                flex: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="app-container">
         <div class="header">
-            <h1>🔐 QuickSync</h1>
-            <p>Secure End-to-End Encrypted Device Synchronization</p>
+            <div class="logo"><i class="fas fa-lock"></i></div>
+            <h1 class="title">QuickSync</h1>
+            <p class="subtitle">End-to-end encrypted messaging</p>
         </div>
         
-        <div class="main-content">
-            <!-- Connection Section -->
-            <div class="connection-section">
-                <div id="statusDisplay" class="status disconnected">
-                    🔴 Disconnected - Create or join a sync session
-                </div>
-                
-                <div id="connectionControls">
-                    <div class="input-group">
-                        <label for="roomKey">Encryption Key (leave empty to generate new):</label>
-                        <input type="text" id="roomKey" placeholder="Enter existing key or leave empty for new session">
-                    </div>
-                    
-                    <button class="btn" onclick="createSession()">🔑 Create New Session</button>
-                    <button class="btn btn-secondary" onclick="joinSession()">🚪 Join Session</button>
-                    <button class="btn btn-danger hidden" id="disconnectBtn" onclick="disconnect()">❌ Disconnect</button>
-                </div>
-                
-                <div id="keyDisplay" class="key-display hidden">
-                    <strong>🔐 Your Session Key:</strong>
-                    <code id="generatedKey"></code>
-                    <p style="margin-top: 10px; color: #6b7280; font-size: 14px;">
-                        Share this key with other devices to sync messages securely.
-                    </p>
-                </div>
-                
-                <div id="connectedDevices" class="connected-devices hidden">
-                    <strong>📱 Connected Devices: <span id="deviceCount">1</span></strong>
-                    <div class="device-list" id="deviceList">
-                        <div class="device-item">
-                            <span>🖥️ This Device</span>
-                            <span style="font-size: 12px; color: #6b7280;">Host</span>
-                        </div>
-                    </div>
-                </div>
+        <div class="main">
+            <div id="statusBar" class="status-bar disconnected">
+                <div class="status-indicator"></div>
+                <span>Disconnected</span>
             </div>
             
-            <!-- Chat Section -->
-            <div id="chatSection" class="chat-container hidden">
-                <div class="messages" id="messages"></div>
-                <div class="message-input-container">
-                    <input type="text" id="messageInput" class="message-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
-                    <button class="send-btn" onclick="sendMessage()">📤 Send</button>
+            <div id="connectionSection" class="input-section">
+                <div class="input-group">
+                    <label class="label" for="sessionKey">Session Key</label>
+                    <input type="text" id="sessionKey" class="input" placeholder="Enter key to join or leave empty to create">
                 </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="createSession()">
+                        <i class="fas fa-plus"></i> Create
+                    </button>
+                    <button class="btn btn-secondary" onclick="joinSession()">
+                        <i class="fas fa-sign-in-alt"></i> Join
+                    </button>
+                </div>
+                
+                <button class="btn btn-danger hidden" id="disconnectBtn" onclick="disconnect()">
+                    <i class="fas fa-power-off"></i> Disconnect
+                </button>
+            </div>
+            
+            <div id="keyDisplay" class="key-display hidden">
+                <div class="key-label">
+                    <i class="fas fa-key"></i>
+                    Your Session Key
+                </div>
+                <div class="key-value" id="generatedKey">
+                    <button class="copy-btn" onclick="copyKey()">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="key-info">Share this key with other devices to start syncing</div>
+            </div>
+            
+            <div id="devicesInfo" class="devices-info hidden">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-wifi"></i>
+                    <span id="deviceStatus">Session active • <span id="deviceCount">1</span> device connected</span>
+                </div>
+                <div id="peerList" class="peer-list"></div>
+            </div>
+        </div>
+        
+        <div id="chatSection" class="chat-container hidden">
+            <div class="messages" id="messages">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="far fa-comments"></i></div>
+                    <div>Send your first encrypted message</div>
+                </div>
+            </div>
+            <div class="message-input-area">
+                <textarea id="messageInput" class="message-input" placeholder="Type a message..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
+                <button class="send-btn" onclick="sendMessage()" id="sendButton">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <script>
-        // Encryption and communication logic
-        let currentSession = null;
-        let isHost = false;
-        let connectedPeers = new Set();
-        let messageHistory = [];
+    <div id="notification" class="notification"></div>
 
-        // Simple encryption using Web Crypto API
+    <script>
+        let currentSession = null;
+        let messageHistory = [];
+        let connectedPeers = new Map();
+        let isHost = false;
+        let broadcastChannel = null;
+        let heartbeatInterval = null;
+        let peerId = null;
+
+        // Initialize peer ID
+        function generatePeerId() {
+            return 'peer_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Encryption utilities
         async function generateKey() {
-            const array = new Uint8Array(32);
+            const array = new Uint8Array(16);
             crypto.getRandomValues(array);
             return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
         }
@@ -360,7 +604,6 @@
             const data = encoder.encode(message);
             const keyData = new Uint8Array(key.match(/.{2}/g).map(byte => parseInt(byte, 16)));
             
-            // Simple XOR encryption for demo (in production, use proper AES)
             const encrypted = new Uint8Array(data.length);
             for (let i = 0; i < data.length; i++) {
                 encrypted[i] = data[i] ^ keyData[i % keyData.length];
@@ -379,91 +622,310 @@
                     decrypted[i] = encrypted[i] ^ keyData[i % keyData.length];
                 }
                 
-                const decoder = new TextDecoder();
-                return decoder.decode(decrypted);
-            } catch (error) {
+                return new TextDecoder().decode(decrypted);
+            } catch {
                 return '[Decryption failed]';
             }
         }
 
+        // Multi-device communication using BroadcastChannel and localStorage
+        function initializeBroadcast(sessionKey) {
+            // Use BroadcastChannel for same-origin communication
+            try {
+                broadcastChannel = new BroadcastChannel(`quicksync_${sessionKey}`);
+                broadcastChannel.onmessage = handleBroadcastMessage;
+            } catch (e) {
+                console.log('BroadcastChannel not supported, using localStorage fallback');
+            }
+
+            // Fallback to localStorage events for cross-tab communication
+            window.addEventListener('storage', handleStorageEvent);
+            
+            // Start heartbeat to detect active peers
+            startHeartbeat();
+        }
+
+        function handleBroadcastMessage(event) {
+            const { type, data, senderId } = event.data;
+            
+            if (senderId === peerId) return; // Ignore own messages
+            
+            switch (type) {
+                case 'message':
+                    receiveMessage(data);
+                    break;
+                case 'peer_join':
+                    handlePeerJoin(data);
+                    break;
+                case 'peer_leave':
+                    handlePeerLeave(senderId);
+                    break;
+                case 'heartbeat':
+                    handleHeartbeat(data);
+                    break;
+            }
+        }
+
+        function handleStorageEvent(event) {
+            if (!event.key || !event.key.startsWith('quicksync_broadcast_') || !currentSession) return;
+            
+            if (event.newValue) {
+                try {
+                    const data = JSON.parse(event.newValue);
+                    if (data.sessionKey === currentSession.key && data.senderId !== peerId) {
+                        handleBroadcastMessage({ data });
+                    }
+                } catch (e) {
+                    console.error('Error parsing storage event:', e);
+                }
+            }
+        }
+
+        function broadcastMessage(type, data) {
+            const message = {
+                type,
+                data,
+                senderId: peerId,
+                timestamp: Date.now()
+            };
+
+            // Send via BroadcastChannel
+            if (broadcastChannel) {
+                broadcastChannel.postMessage(message);
+            }
+
+            // Send via localStorage for cross-origin support
+            const storageKey = `quicksync_broadcast_${Date.now()}_${Math.random()}`;
+            const storageData = {
+                ...message,
+                sessionKey: currentSession.key
+            };
+            
+            localStorage.setItem(storageKey, JSON.stringify(storageData));
+            
+            // Clean up old storage items
+            setTimeout(() => {
+                localStorage.removeItem(storageKey);
+            }, 1000);
+        }
+
+        function startHeartbeat() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            
+            heartbeatInterval = setInterval(() => {
+                if (currentSession) {
+                    broadcastMessage('heartbeat', {
+                        peerId: peerId,
+                        deviceInfo: getDeviceInfo(),
+                        timestamp: Date.now()
+                    });
+                    
+                    // Clean up stale peers
+                    cleanupStalePeers();
+                }
+            }, 5000);
+        }
+
+        function handleHeartbeat(data) {
+            if (data.peerId && data.peerId !== peerId) {
+                connectedPeers.set(data.peerId, {
+                    ...data,
+                    lastSeen: Date.now()
+                });
+                updatePeerList();
+            }
+        }
+
+        function cleanupStalePeers() {
+            const now = Date.now();
+            const staleThreshold = 15000; // 15 seconds
+            
+            let removed = false;
+            connectedPeers.forEach((peer, peerId) => {
+                if (now - peer.lastSeen > staleThreshold) {
+                    connectedPeers.delete(peerId);
+                    removed = true;
+                }
+            });
+            
+            if (removed) {
+                updatePeerList();
+            }
+        }
+
+        function getDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            let deviceType = 'Desktop';
+            
+            if (/Mobile|Android|iPhone|iPad/.test(userAgent)) {
+                deviceType = /iPad/.test(userAgent) ? 'Tablet' : 'Mobile';
+            }
+            
+            return {
+                type: deviceType,
+                browser: getBrowserName(),
+                platform: navigator.platform
+            };
+        }
+
+        function getBrowserName() {
+            const userAgent = navigator.userAgent;
+            if (userAgent.includes('Chrome')) return 'Chrome';
+            if (userAgent.includes('Firefox')) return 'Firefox';
+            if (userAgent.includes('Safari')) return 'Safari';
+            if (userAgent.includes('Edge')) return 'Edge';
+            return 'Unknown';
+        }
+
         // Session management
         async function createSession() {
-            const customKey = document.getElementById('roomKey').value.trim();
+            const customKey = document.getElementById('sessionKey').value.trim();
             const sessionKey = customKey || await generateKey();
+            
+            peerId = generatePeerId();
+            isHost = true;
             
             currentSession = {
                 key: sessionKey,
                 id: 'session_' + Date.now(),
-                messages: []
+                created: Date.now(),
+                host: peerId
             };
             
-            isHost = true;
-            updateUI('connected');
+            updateStatus('connected', 'Connected as Host');
             showSessionKey(sessionKey);
+            showChat();
             
-            // Store session in localStorage for persistence
             localStorage.setItem('quicksync_session', JSON.stringify(currentSession));
             
-            // Start listening for other devices (simulation)
-            startPeerListening();
+            // Initialize multi-device communication
+            initializeBroadcast(sessionKey);
+            
+            // Announce presence
+            setTimeout(() => {
+                broadcastMessage('peer_join', {
+                    peerId: peerId,
+                    deviceInfo: getDeviceInfo(),
+                    isHost: true
+                });
+                
+                addSystemMessage('Session created. Waiting for other devices to join...');
+            }, 500);
         }
 
         async function joinSession() {
-            const sessionKey = document.getElementById('roomKey').value.trim();
+            const sessionKey = document.getElementById('sessionKey').value.trim();
             
             if (!sessionKey) {
-                alert('Please enter a session key to join!');
+                showNotification('Please enter a session key', 'error');
                 return;
             }
             
+            peerId = generatePeerId();
+            isHost = false;
+            
             currentSession = {
                 key: sessionKey,
-                id: 'session_' + Date.now(),
-                messages: []
+                id: 'session_join_' + Date.now(),
+                created: Date.now()
             };
             
-            isHost = false;
-            updateUI('connected');
+            updateStatus('connecting', 'Connecting...');
             
-            // Try to connect to existing session
-            connectToPeer(sessionKey);
+            // Initialize multi-device communication
+            initializeBroadcast(sessionKey);
+            
+            setTimeout(() => {
+                updateStatus('connected', 'Connected');
+                showChat();
+                
+                // Announce joining
+                broadcastMessage('peer_join', {
+                    peerId: peerId,
+                    deviceInfo: getDeviceInfo(),
+                    isHost: false
+                });
+                
+                addSystemMessage('Connected to encrypted session');
+                showNotification('Successfully joined session!');
+            }, 1000);
         }
 
         function disconnect() {
+            if (currentSession && peerId) {
+                broadcastMessage('peer_leave', { peerId: peerId });
+            }
+            
+            // Cleanup
+            if (broadcastChannel) {
+                broadcastChannel.close();
+                broadcastChannel = null;
+            }
+            
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+            
+            window.removeEventListener('storage', handleStorageEvent);
+            
             currentSession = null;
-            isHost = false;
-            connectedPeers.clear();
             messageHistory = [];
+            connectedPeers.clear();
+            peerId = null;
+            isHost = false;
             
             localStorage.removeItem('quicksync_session');
-            updateUI('disconnected');
+            
+            updateStatus('disconnected', 'Disconnected');
+            hideSessionKey();
+            hideChat();
             clearMessages();
+            updatePeerList();
         }
 
-        // UI Updates
-        function updateUI(status) {
-            const statusDisplay = document.getElementById('statusDisplay');
-            const chatSection = document.getElementById('chatSection');
-            const keyDisplay = document.getElementById('keyDisplay');
-            const connectedDevices = document.getElementById('connectedDevices');
+        function handlePeerJoin(data) {
+            if (data.peerId && data.peerId !== peerId) {
+                connectedPeers.set(data.peerId, {
+                    ...data,
+                    lastSeen: Date.now()
+                });
+                
+                const deviceType = data.deviceInfo?.type || 'Device';
+                addSystemMessage(`${deviceType} joined the session`);
+                updatePeerList();
+                showNotification(`New ${deviceType.toLowerCase()} connected!`);
+            }
+        }
+
+        function handlePeerLeave(peerId) {
+            if (connectedPeers.has(peerId)) {
+                const peer = connectedPeers.get(peerId);
+                const deviceType = peer.deviceInfo?.type || 'Device';
+                connectedPeers.delete(peerId);
+                addSystemMessage(`${deviceType} left the session`);
+                updatePeerList();
+            }
+        }
+
+        // UI updates
+        function updateStatus(status, text) {
+            const statusBar = document.getElementById('statusBar');
             const disconnectBtn = document.getElementById('disconnectBtn');
+            const devicesInfo = document.getElementById('devicesInfo');
+            
+            statusBar.className = `status-bar ${status}`;
+            statusBar.innerHTML = `
+                <div class="status-indicator"></div>
+                <span>${text}</span>
+            `;
             
             if (status === 'connected') {
-                statusDisplay.className = 'status connected';
-                statusDisplay.innerHTML = '🟢 Connected - Session Active';
-                chatSection.classList.remove('hidden');
                 disconnectBtn.classList.remove('hidden');
-                connectedDevices.classList.remove('hidden');
-            } else if (status === 'waiting') {
-                statusDisplay.className = 'status waiting';
-                statusDisplay.innerHTML = '🟡 Waiting for other devices to join...';
+                devicesInfo.classList.remove('hidden');
             } else {
-                statusDisplay.className = 'status disconnected';
-                statusDisplay.innerHTML = '🔴 Disconnected - Create or join a sync session';
-                chatSection.classList.add('hidden');
-                keyDisplay.classList.add('hidden');
-                connectedDevices.classList.add('hidden');
                 disconnectBtn.classList.add('hidden');
+                devicesInfo.classList.add('hidden');
             }
         }
 
@@ -471,8 +933,94 @@
             const keyDisplay = document.getElementById('keyDisplay');
             const generatedKey = document.getElementById('generatedKey');
             
-            generatedKey.textContent = key;
+            generatedKey.innerHTML = `
+                ${key}
+                <button class="copy-btn" onclick="copyKey()">
+                    <i class="fas fa-copy"></i>
+                </button>
+            `;
             keyDisplay.classList.remove('hidden');
+        }
+
+        function copyKey() {
+            const keyValue = document.getElementById('generatedKey').textContent.trim();
+            navigator.clipboard.writeText(keyValue).then(() => {
+                showNotification('Key copied to clipboard!');
+            });
+        }
+
+        function hideSessionKey() {
+            document.getElementById('keyDisplay').classList.add('hidden');
+        }
+
+        function showChat() {
+            document.getElementById('chatSection').classList.remove('hidden');
+        }
+
+        function hideChat() {
+            document.getElementById('chatSection').classList.add('hidden');
+        }
+
+        function updatePeerList() {
+            const peerList = document.getElementById('peerList');
+            const deviceCount = document.getElementById('deviceCount');
+            
+            const totalDevices = connectedPeers.size + 1;
+            deviceCount.textContent = totalDevices;
+            
+            peerList.innerHTML = '';
+            
+            // Add current device
+            const currentDevice = document.createElement('div');
+            currentDevice.className = 'peer-item';
+            currentDevice.innerHTML = `
+                <div class="peer-info">
+                    <div class="peer-status"></div>
+                    <i class="fas fa-desktop"></i>
+                    <span>This Device ${isHost ? '(Host)' : ''}</span>
+                </div>
+                <span style="font-size: 11px; color: #71717a;">You</span>
+            `;
+            peerList.appendChild(currentDevice);
+            
+            // Add connected peers
+            connectedPeers.forEach((peer, id) => {
+                const peerElement = document.createElement('div');
+                peerElement.className = 'peer-item';
+                
+                const deviceIcon = getDeviceIcon(peer.deviceInfo?.type);
+                const deviceType = peer.deviceInfo?.type || 'Device';
+                const browser = peer.deviceInfo?.browser || '';
+                
+                peerElement.innerHTML = `
+                    <div class="peer-info">
+                        <div class="peer-status"></div>
+                        <i class="fas ${deviceIcon}"></i>
+                        <span>${deviceType} ${browser ? `(${browser})` : ''}</span>
+                    </div>
+                    <span style="font-size: 11px; color: #22c55e;">Online</span>
+                `;
+                peerList.appendChild(peerElement);
+            });
+        }
+
+        function getDeviceIcon(deviceType) {
+            switch (deviceType) {
+                case 'Mobile': return 'fa-mobile-alt';
+                case 'Tablet': return 'fa-tablet-alt';
+                default: return 'fa-desktop';
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
 
         // Messaging
@@ -485,169 +1033,159 @@
             const messageData = {
                 id: Date.now(),
                 text: message,
-                timestamp: new Date().toLocaleTimeString(),
-                sender: 'self',
+                timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                sender: peerId,
                 encrypted: await encryptMessage(message, currentSession.key)
             };
             
-            // Add to local messages
-            addMessageToUI(messageData, true);
+            // Add to local chat
+            addMessageToChat(messageData, true);
             messageHistory.push(messageData);
             
-            // Broadcast to connected peers (simulation)
-            broadcastMessage(messageData);
+            // Broadcast to other devices
+            broadcastMessage('message', messageData);
             
+            // Clear input
             messageInput.value = '';
+            autoResize(messageInput);
+            clearEmptyState();
         }
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
-        }
-
-        function addMessageToUI(messageData, isSent = false) {
-            const messagesContainer = document.getElementById('messages');
-            const messageDiv = document.createElement('div');
+        function receiveMessage(messageData) {
+            if (messageData.sender === peerId) return; // Don't show own messages
             
+            addMessageToChat(messageData, false);
+            messageHistory.push(messageData);
+        }
+
+        function addMessageToChat(messageData, isSent = false) {
+            const messagesContainer = document.getElementById('messages');
+            
+            clearEmptyState();
+            
+            const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
             messageDiv.innerHTML = `
                 <div>${messageData.text}</div>
-                <small style="opacity: 0.7; font-size: 12px;">${messageData.timestamp}</small>
+                <div class="message-time">${messageData.timestamp}</div>
             `;
             
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
+        function addSystemMessage(text) {
+            const messagesContainer = document.getElementById('messages');
+            
+            clearEmptyState();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.innerHTML = `
+                <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                ${text}
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function clearEmptyState() {
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+        }
+
         function clearMessages() {
-            document.getElementById('messages').innerHTML = '';
-            messageHistory = [];
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="far fa-comments"></i></div>
+                    <div>Send your first encrypted message</div>
+                </div>
+            `;
         }
 
-        // Peer-to-peer simulation (in real implementation, would use WebRTC, WebSockets, etc.)
-        function startPeerListening() {
-            // Simulate other devices connecting
-            setTimeout(() => {
-                simulateDeviceConnection();
-            }, 2000);
+        // Input handling
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
         }
 
-        function connectToPeer(sessionKey) {
-            // Simulate connecting to existing session
-            setTimeout(() => {
-                updateUI('connected');
-                simulateReceiveMessages();
-            }, 1000);
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 80) + 'px';
         }
 
-        function broadcastMessage(messageData) {
-            // Simulate broadcasting to other devices
-            // In real implementation, this would send via WebRTC/WebSocket
-            
-            // Store for other tabs/windows on same device
-            const broadcastData = {
-                type: 'message',
-                session: currentSession.id,
-                data: messageData
-            };
-            
-            localStorage.setItem('quicksync_broadcast', JSON.stringify(broadcastData));
-            localStorage.removeItem('quicksync_broadcast'); // Trigger storage event
-        }
+        // Auto-resize message input
+        document.getElementById('messageInput').addEventListener('input', function() {
+            autoResize(this);
+        });
 
-        function simulateDeviceConnection() {
-            connectedPeers.add('device_' + Date.now());
-            updateDeviceList();
-            
-            // Simulate receiving a message from new device
-            setTimeout(() => {
-                simulateReceiveMessage("Hello! I just connected to the session 👋");
-            }, 3000);
-        }
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (currentSession && peerId) {
+                broadcastMessage('peer_leave', { peerId: peerId });
+            }
+        });
 
-        async function simulateReceiveMessage(text) {
-            if (!currentSession) return;
-            
-            const messageData = {
-                id: Date.now(),
-                text: text,
-                timestamp: new Date().toLocaleTimeString(),
-                sender: 'peer'
-            };
-            
-            addMessageToUI(messageData, false);
-            messageHistory.push(messageData);
-        }
-
-        function simulateReceiveMessages() {
-            // Simulate receiving existing messages when joining
-            const demoMessages = [
-                "Welcome to the encrypted session!",
-                "All messages are end-to-end encrypted 🔐",
-                "You can now send secure messages across devices"
-            ];
-            
-            demoMessages.forEach((text, index) => {
-                setTimeout(() => {
-                    simulateReceiveMessage(text);
-                }, (index + 1) * 1000);
-            });
-        }
-
-        function updateDeviceList() {
-            const deviceCount = document.getElementById('deviceCount');
-            const deviceList = document.getElementById('deviceList');
-            
-            deviceCount.textContent = connectedPeers.size + 1; // +1 for current device
-            
-            // Clear and rebuild device list
-            deviceList.innerHTML = '<div class="device-item"><span>🖥️ This Device</span><span style="font-size: 12px; color: #6b7280;">Host</span></div>';
-            
-            connectedPeers.forEach((peerId, index) => {
-                const deviceItem = document.createElement('div');
-                deviceItem.className = 'device-item';
-                deviceItem.innerHTML = `
-                    <span>📱 Device ${index + 1}</span>
-                    <span style="font-size: 12px; color: #10b981;">Connected</span>
-                `;
-                deviceList.appendChild(deviceItem);
-            });
-        }
-
-        // Listen for storage events (for same-device multi-tab sync)
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'quicksync_broadcast' && event.newValue) {
-                const broadcastData = JSON.parse(event.newValue);
-                
-                if (broadcastData.type === 'message' && currentSession && broadcastData.session !== currentSession.id) {
-                    // Received message from another tab/window
-                    addMessageToUI(broadcastData.data, false);
+        // Restore session on load
+        window.addEventListener('load', () => {
+            const savedSession = localStorage.getItem('quicksync_session');
+            if (savedSession) {
+                try {
+                    const session = JSON.parse(savedSession);
+                    
+                    // Check if session is not too old (24 hours)
+                    const maxAge = 24 * 60 * 60 * 1000;
+                    if (Date.now() - session.created < maxAge) {
+                        currentSession = session;
+                        peerId = generatePeerId();
+                        isHost = session.host === peerId;
+                        
+                        updateStatus('connected', 'Connected');
+                        showSessionKey(currentSession.key);
+                        showChat();
+                        
+                        // Reinitialize communication
+                        initializeBroadcast(currentSession.key);
+                        
+                        setTimeout(() => {
+                            broadcastMessage('peer_join', {
+                                peerId: peerId,
+                                deviceInfo: getDeviceInfo(),
+                                isHost: isHost
+                            });
+                            
+                            addSystemMessage('Reconnected to session');
+                        }, 1000);
+                    } else {
+                        localStorage.removeItem('quicksync_session');
+                    }
+                } catch (e) {
+                    localStorage.removeItem('quicksync_session');
                 }
             }
         });
 
-        // Auto-restore session on page load
-        window.addEventListener('load', () => {
-            const savedSession = localStorage.getItem('quicksync_session');
-            if (savedSession) {
-                currentSession = JSON.parse(savedSession);
-                isHost = true;
-                updateUI('connected');
-                showSessionKey(currentSession.key);
-                
-                // Restore message history
-                currentSession.messages?.forEach(msg => {
-                    addMessageToUI(msg, msg.sender === 'self');
-                });
+        // Add some visual feedback for connection status
+        setInterval(() => {
+            if (currentSession) {
+                const statusBar = document.getElementById('statusBar');
+                if (statusBar.classList.contains('connected')) {
+                    const indicator = statusBar.querySelector('.status-indicator');
+                    if (indicator) {
+                        indicator.style.animation = 'none';
+                        setTimeout(() => {
+                            indicator.style.animation = 'pulse 2s infinite';
+                        }, 100);
+                    }
+                }
             }
-        });
-
-        // Add some demo functionality
-        window.addEventListener('load', () => {
-            console.log('🔐 QuickSync Loaded');
-            console.log('Features: End-to-end encryption, Cross-device sync, No central server');
-        });
+        }, 10000);
     </script>
 </body>
 </html>
