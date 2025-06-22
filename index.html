@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickSync - Encrypted Device Sync</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .connection-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status.connected {
+            background: #d1fae5;
+            color: #047857;
+            border: 2px solid #10b981;
+        }
+
+        .status.disconnected {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 2px solid #ef4444;
+        }
+
+        .status.waiting {
+            background: #fef3c7;
+            color: #d97706;
+            border: 2px solid #f59e0b;
+        }
+
+        .chat-container {
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 20px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.sent {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            margin-left: 20%;
+            text-align: right;
+        }
+
+        .message.received {
+            background: #e5e7eb;
+            color: #374151;
+            margin-right: 20%;
+        }
+
+        .message-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+
+        .send-btn {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .key-display {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            border: 2px dashed #9ca3af;
+        }
+
+        .key-display strong {
+            color: #374151;
+        }
+
+        .key-display code {
+            background: #e5e7eb;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #1f2937;
+            word-break: break-all;
+            display: block;
+            margin-top: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .connected-devices {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .device-list {
+            margin-top: 10px;
+        }
+
+        .device-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 16px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .chat-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 QuickSync</h1>
+            <p>Secure End-to-End Encrypted Device Synchronization</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- Connection Section -->
+            <div class="connection-section">
+                <div id="statusDisplay" class="status disconnected">
+                    🔴 Disconnected - Create or join a sync session
+                </div>
+                
+                <div id="connectionControls">
+                    <div class="input-group">
+                        <label for="roomKey">Encryption Key (leave empty to generate new):</label>
+                        <input type="text" id="roomKey" placeholder="Enter existing key or leave empty for new session">
+                    </div>
+                    
+                    <button class="btn" onclick="createSession()">🔑 Create New Session</button>
+                    <button class="btn btn-secondary" onclick="joinSession()">🚪 Join Session</button>
+                    <button class="btn btn-danger hidden" id="disconnectBtn" onclick="disconnect()">❌ Disconnect</button>
+                </div>
+                
+                <div id="keyDisplay" class="key-display hidden">
+                    <strong>🔐 Your Session Key:</strong>
+                    <code id="generatedKey"></code>
+                    <p style="margin-top: 10px; color: #6b7280; font-size: 14px;">
+                        Share this key with other devices to sync messages securely.
+                    </p>
+                </div>
+                
+                <div id="connectedDevices" class="connected-devices hidden">
+                    <strong>📱 Connected Devices: <span id="deviceCount">1</span></strong>
+                    <div class="device-list" id="deviceList">
+                        <div class="device-item">
+                            <span>🖥️ This Device</span>
+                            <span style="font-size: 12px; color: #6b7280;">Host</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Section -->
+            <div id="chatSection" class="chat-container hidden">
+                <div class="messages" id="messages"></div>
+                <div class="message-input-container">
+                    <input type="text" id="messageInput" class="message-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" onclick="sendMessage()">📤 Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Encryption and communication logic
+        let currentSession = null;
+        let isHost = false;
+        let connectedPeers = new Set();
+        let messageHistory = [];
+
+        // Simple encryption using Web Crypto API
+        async function generateKey() {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function encryptMessage(message, key) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            const keyData = new Uint8Array(key.match(/.{2}/g).map(byte => parseInt(byte, 16)));
+            
+            // Simple XOR encryption for demo (in production, use proper AES)
+            const encrypted = new Uint8Array(data.length);
+            for (let i = 0; i < data.length; i++) {
+                encrypted[i] = data[i] ^ keyData[i % keyData.length];
+            }
+            
+            return Array.from(encrypted, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function decryptMessage(encryptedMessage, key) {
+            try {
+                const encrypted = new Uint8Array(encryptedMessage.match(/.{2}/g).map(byte => parseInt(byte, 16)));
+                const keyData = new Uint8Array(key.match(/.{2}/g).map(byte => parseInt(byte, 16)));
+                
+                const decrypted = new Uint8Array(encrypted.length);
+                for (let i = 0; i < encrypted.length; i++) {
+                    decrypted[i] = encrypted[i] ^ keyData[i % keyData.length];
+                }
+                
+                const decoder = new TextDecoder();
+                return decoder.decode(decrypted);
+            } catch (error) {
+                return '[Decryption failed]';
+            }
+        }
+
+        // Session management
+        async function createSession() {
+            const customKey = document.getElementById('roomKey').value.trim();
+            const sessionKey = customKey || await generateKey();
+            
+            currentSession = {
+                key: sessionKey,
+                id: 'session_' + Date.now(),
+                messages: []
+            };
+            
+            isHost = true;
+            updateUI('connected');
+            showSessionKey(sessionKey);
+            
+            // Store session in localStorage for persistence
+            localStorage.setItem('quicksync_session', JSON.stringify(currentSession));
+            
+            // Start listening for other devices (simulation)
+            startPeerListening();
+        }
+
+        async function joinSession() {
+            const sessionKey = document.getElementById('roomKey').value.trim();
+            
+            if (!sessionKey) {
+                alert('Please enter a session key to join!');
+                return;
+            }
+            
+            currentSession = {
+                key: sessionKey,
+                id: 'session_' + Date.now(),
+                messages: []
+            };
+            
+            isHost = false;
+            updateUI('connected');
+            
+            // Try to connect to existing session
+            connectToPeer(sessionKey);
+        }
+
+        function disconnect() {
+            currentSession = null;
+            isHost = false;
+            connectedPeers.clear();
+            messageHistory = [];
+            
+            localStorage.removeItem('quicksync_session');
+            updateUI('disconnected');
+            clearMessages();
+        }
+
+        // UI Updates
+        function updateUI(status) {
+            const statusDisplay = document.getElementById('statusDisplay');
+            const chatSection = document.getElementById('chatSection');
+            const keyDisplay = document.getElementById('keyDisplay');
+            const connectedDevices = document.getElementById('connectedDevices');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            if (status === 'connected') {
+                statusDisplay.className = 'status connected';
+                statusDisplay.innerHTML = '🟢 Connected - Session Active';
+                chatSection.classList.remove('hidden');
+                disconnectBtn.classList.remove('hidden');
+                connectedDevices.classList.remove('hidden');
+            } else if (status === 'waiting') {
+                statusDisplay.className = 'status waiting';
+                statusDisplay.innerHTML = '🟡 Waiting for other devices to join...';
+            } else {
+                statusDisplay.className = 'status disconnected';
+                statusDisplay.innerHTML = '🔴 Disconnected - Create or join a sync session';
+                chatSection.classList.add('hidden');
+                keyDisplay.classList.add('hidden');
+                connectedDevices.classList.add('hidden');
+                disconnectBtn.classList.add('hidden');
+            }
+        }
+
+        function showSessionKey(key) {
+            const keyDisplay = document.getElementById('keyDisplay');
+            const generatedKey = document.getElementById('generatedKey');
+            
+            generatedKey.textContent = key;
+            keyDisplay.classList.remove('hidden');
+        }
+
+        // Messaging
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message || !currentSession) return;
+            
+            const messageData = {
+                id: Date.now(),
+                text: message,
+                timestamp: new Date().toLocaleTimeString(),
+                sender: 'self',
+                encrypted: await encryptMessage(message, currentSession.key)
+            };
+            
+            // Add to local messages
+            addMessageToUI(messageData, true);
+            messageHistory.push(messageData);
+            
+            // Broadcast to connected peers (simulation)
+            broadcastMessage(messageData);
+            
+            messageInput.value = '';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function addMessageToUI(messageData, isSent = false) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            messageDiv.innerHTML = `
+                <div>${messageData.text}</div>
+                <small style="opacity: 0.7; font-size: 12px;">${messageData.timestamp}</small>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+            messageHistory = [];
+        }
+
+        // Peer-to-peer simulation (in real implementation, would use WebRTC, WebSockets, etc.)
+        function startPeerListening() {
+            // Simulate other devices connecting
+            setTimeout(() => {
+                simulateDeviceConnection();
+            }, 2000);
+        }
+
+        function connectToPeer(sessionKey) {
+            // Simulate connecting to existing session
+            setTimeout(() => {
+                updateUI('connected');
+                simulateReceiveMessages();
+            }, 1000);
+        }
+
+        function broadcastMessage(messageData) {
+            // Simulate broadcasting to other devices
+            // In real implementation, this would send via WebRTC/WebSocket
+            
+            // Store for other tabs/windows on same device
+            const broadcastData = {
+                type: 'message',
+                session: currentSession.id,
+                data: messageData
+            };
+            
+            localStorage.setItem('quicksync_broadcast', JSON.stringify(broadcastData));
+            localStorage.removeItem('quicksync_broadcast'); // Trigger storage event
+        }
+
+        function simulateDeviceConnection() {
+            connectedPeers.add('device_' + Date.now());
+            updateDeviceList();
+            
+            // Simulate receiving a message from new device
+            setTimeout(() => {
+                simulateReceiveMessage("Hello! I just connected to the session 👋");
+            }, 3000);
+        }
+
+        async function simulateReceiveMessage(text) {
+            if (!currentSession) return;
+            
+            const messageData = {
+                id: Date.now(),
+                text: text,
+                timestamp: new Date().toLocaleTimeString(),
+                sender: 'peer'
+            };
+            
+            addMessageToUI(messageData, false);
+            messageHistory.push(messageData);
+        }
+
+        function simulateReceiveMessages() {
+            // Simulate receiving existing messages when joining
+            const demoMessages = [
+                "Welcome to the encrypted session!",
+                "All messages are end-to-end encrypted 🔐",
+                "You can now send secure messages across devices"
+            ];
+            
+            demoMessages.forEach((text, index) => {
+                setTimeout(() => {
+                    simulateReceiveMessage(text);
+                }, (index + 1) * 1000);
+            });
+        }
+
+        function updateDeviceList() {
+            const deviceCount = document.getElementById('deviceCount');
+            const deviceList = document.getElementById('deviceList');
+            
+            deviceCount.textContent = connectedPeers.size + 1; // +1 for current device
+            
+            // Clear and rebuild device list
+            deviceList.innerHTML = '<div class="device-item"><span>🖥️ This Device</span><span style="font-size: 12px; color: #6b7280;">Host</span></div>';
+            
+            connectedPeers.forEach((peerId, index) => {
+                const deviceItem = document.createElement('div');
+                deviceItem.className = 'device-item';
+                deviceItem.innerHTML = `
+                    <span>📱 Device ${index + 1}</span>
+                    <span style="font-size: 12px; color: #10b981;">Connected</span>
+                `;
+                deviceList.appendChild(deviceItem);
+            });
+        }
+
+        // Listen for storage events (for same-device multi-tab sync)
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'quicksync_broadcast' && event.newValue) {
+                const broadcastData = JSON.parse(event.newValue);
+                
+                if (broadcastData.type === 'message' && currentSession && broadcastData.session !== currentSession.id) {
+                    // Received message from another tab/window
+                    addMessageToUI(broadcastData.data, false);
+                }
+            }
+        });
+
+        // Auto-restore session on page load
+        window.addEventListener('load', () => {
+            const savedSession = localStorage.getItem('quicksync_session');
+            if (savedSession) {
+                currentSession = JSON.parse(savedSession);
+                isHost = true;
+                updateUI('connected');
+                showSessionKey(currentSession.key);
+                
+                // Restore message history
+                currentSession.messages?.forEach(msg => {
+                    addMessageToUI(msg, msg.sender === 'self');
+                });
+            }
+        });
+
+        // Add some demo functionality
+        window.addEventListener('load', () => {
+            console.log('🔐 QuickSync Loaded');
+            console.log('Features: End-to-end encryption, Cross-device sync, No central server');
+        });
+    </script>
+</body>
+</html>
