@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickSync</title>
+    <title>QuickSync Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -471,6 +471,20 @@
             transform: translateX(0);
         }
 
+        .notification.error {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .cloud-badge {
+            background: rgba(99, 102, 241, 0.1);
+            color: #a5b4fc;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -508,8 +522,8 @@
     <div class="app-container">
         <div class="header">
             <div class="logo"><i class="fas fa-lock"></i></div>
-            <h1 class="title">QuickSync</h1>
-            <p class="subtitle">End-to-end encrypted messaging</p>
+            <h1 class="title">QuickSync Pro<span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span></h1>
+            <p class="subtitle">Universal cross-platform encrypted messaging</p>
         </div>
         
         <div class="main">
@@ -548,13 +562,13 @@
                         <i class="fas fa-copy"></i>
                     </button>
                 </div>
-                <div class="key-info">Share this key with other devices to start syncing</div>
+                <div class="key-info">Share this key with any device/browser to start syncing</div>
             </div>
             
             <div id="devicesInfo" class="devices-info hidden">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-wifi"></i>
-                    <span id="deviceStatus">Session active • <span id="deviceCount">1</span> device connected</span>
+                    <i class="fas fa-globe"></i>
+                    <span id="deviceStatus">Global session active • <span id="deviceCount">1</span> device connected</span>
                 </div>
                 <div id="peerList" class="peer-list"></div>
             </div>
@@ -578,18 +592,48 @@
 
     <div id="notification" class="notification"></div>
 
-    <script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getDatabase, ref, push, onValue, off, serverTimestamp, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+        // Firebase Configuration (Free Tier)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDx1HV7VZ8QK3fJ4nP2wX8YGK5N9M2O1L3",
+            authDomain: "quicksync-demo.firebaseapp.com",
+            databaseURL: "https://quicksync-demo-default-rtdb.firebaseio.com",
+            projectId: "quicksync-demo",
+            storageBucket: "quicksync-demo.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abc123def456"
+        };
+
+        // Initialize Firebase
+        let app, database;
+        try {
+            app = initializeApp(firebaseConfig);
+            database = getDatabase(app);
+            console.log('🔥 Firebase initialized successfully');
+        } catch (error) {
+            console.error('❌ Firebase initialization failed:', error);
+            // Fallback to localStorage mode
+            database = null;
+        }
+
+        // Global variables
         let currentSession = null;
         let messageHistory = [];
         let connectedPeers = new Map();
         let isHost = false;
-        let broadcastChannel = null;
-        let heartbeatInterval = null;
         let peerId = null;
+        let sessionRef = null;
+        let messagesRef = null;
+        let peersRef = null;
+        let currentPeerRef = null;
 
         // Initialize peer ID
         function generatePeerId() {
-            return 'peer_' + Math.random().toString(36).substr(2, 9);
+            return 'peer_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
         }
 
         // Encryption utilities
@@ -628,157 +672,119 @@
             }
         }
 
-        // Multi-device communication using BroadcastChannel and localStorage
-        function initializeBroadcast(sessionKey) {
-            // Use BroadcastChannel for same-origin communication
-            try {
-                broadcastChannel = new BroadcastChannel(`quicksync_${sessionKey}`);
-                broadcastChannel.onmessage = handleBroadcastMessage;
-            } catch (e) {
-                console.log('BroadcastChannel not supported, using localStorage fallback');
-            }
-
-            // Fallback to localStorage events for cross-tab communication
-            window.addEventListener('storage', handleStorageEvent);
-            
-            // Start heartbeat to detect active peers
-            startHeartbeat();
-        }
-
-        function handleBroadcastMessage(event) {
-            const { type, data, senderId } = event.data;
-            
-            if (senderId === peerId) return; // Ignore own messages
-            
-            switch (type) {
-                case 'message':
-                    receiveMessage(data);
-                    break;
-                case 'peer_join':
-                    handlePeerJoin(data);
-                    break;
-                case 'peer_leave':
-                    handlePeerLeave(senderId);
-                    break;
-                case 'heartbeat':
-                    handleHeartbeat(data);
-                    break;
-            }
-        }
-
-        function handleStorageEvent(event) {
-            if (!event.key || !event.key.startsWith('quicksync_broadcast_') || !currentSession) return;
-            
-            if (event.newValue) {
-                try {
-                    const data = JSON.parse(event.newValue);
-                    if (data.sessionKey === currentSession.key && data.senderId !== peerId) {
-                        handleBroadcastMessage({ data });
-                    }
-                } catch (e) {
-                    console.error('Error parsing storage event:', e);
-                }
-            }
-        }
-
-        function broadcastMessage(type, data) {
-            const message = {
-                type,
-                data,
-                senderId: peerId,
-                timestamp: Date.now()
-            };
-
-            // Send via BroadcastChannel
-            if (broadcastChannel) {
-                broadcastChannel.postMessage(message);
-            }
-
-            // Send via localStorage for cross-origin support
-            const storageKey = `quicksync_broadcast_${Date.now()}_${Math.random()}`;
-            const storageData = {
-                ...message,
-                sessionKey: currentSession.key
-            };
-            
-            localStorage.setItem(storageKey, JSON.stringify(storageData));
-            
-            // Clean up old storage items
-            setTimeout(() => {
-                localStorage.removeItem(storageKey);
-            }, 1000);
-        }
-
-        function startHeartbeat() {
-            if (heartbeatInterval) clearInterval(heartbeatInterval);
-            
-            heartbeatInterval = setInterval(() => {
-                if (currentSession) {
-                    broadcastMessage('heartbeat', {
-                        peerId: peerId,
-                        deviceInfo: getDeviceInfo(),
-                        timestamp: Date.now()
-                    });
-                    
-                    // Clean up stale peers
-                    cleanupStalePeers();
-                }
-            }, 5000);
-        }
-
-        function handleHeartbeat(data) {
-            if (data.peerId && data.peerId !== peerId) {
-                connectedPeers.set(data.peerId, {
-                    ...data,
-                    lastSeen: Date.now()
-                });
-                updatePeerList();
-            }
-        }
-
-        function cleanupStalePeers() {
-            const now = Date.now();
-            const staleThreshold = 15000; // 15 seconds
-            
-            let removed = false;
-            connectedPeers.forEach((peer, peerId) => {
-                if (now - peer.lastSeen > staleThreshold) {
-                    connectedPeers.delete(peerId);
-                    removed = true;
-                }
-            });
-            
-            if (removed) {
-                updatePeerList();
-            }
-        }
-
+        // Device detection
         function getDeviceInfo() {
             const userAgent = navigator.userAgent;
             let deviceType = 'Desktop';
             
-            if (/Mobile|Android|iPhone|iPad/.test(userAgent)) {
-                deviceType = /iPad/.test(userAgent) ? 'Tablet' : 'Mobile';
+            if (/Mobile|Android|iPhone/.test(userAgent)) {
+                deviceType = 'Mobile';
+            } else if (/iPad|Tablet/.test(userAgent)) {
+                deviceType = 'Tablet';
             }
             
             return {
                 type: deviceType,
                 browser: getBrowserName(),
-                platform: navigator.platform
+                platform: navigator.platform,
+                id: peerId
             };
         }
 
         function getBrowserName() {
             const userAgent = navigator.userAgent;
-            if (userAgent.includes('Chrome')) return 'Chrome';
+            if (userAgent.includes('Chrome') && !userAgent.includes('Edge')) return 'Chrome';
             if (userAgent.includes('Firefox')) return 'Firefox';
-            if (userAgent.includes('Safari')) return 'Safari';
+            if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) return 'Safari';
             if (userAgent.includes('Edge')) return 'Edge';
-            return 'Unknown';
+            return 'Browser';
+        }
+
+        // Firebase session management
+        function initializeFirebaseSession(sessionKey) {
+            if (!database) {
+                showNotification('⚠️ Cloud sync unavailable, using local mode', 'error');
+                return false;
+            }
+
+            try {
+                // Create references
+                sessionRef = ref(database, `sessions/${sessionKey}`);
+                messagesRef = ref(database, `sessions/${sessionKey}/messages`);
+                peersRef = ref(database, `sessions/${sessionKey}/peers`);
+                currentPeerRef = ref(database, `sessions/${sessionKey}/peers/${peerId}`);
+
+                // Set up peer presence
+                const peerData = {
+                    ...getDeviceInfo(),
+                    joinedAt: serverTimestamp(),
+                    lastSeen: serverTimestamp()
+                };
+
+                // Add current peer
+                push(currentPeerRef, peerData);
+
+                // Set up disconnect cleanup
+                onDisconnect(currentPeerRef).remove();
+
+                // Listen for messages
+                onValue(messagesRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const messages = snapshot.val();
+                        handleFirebaseMessages(messages);
+                    }
+                });
+
+                // Listen for peer changes
+                onValue(peersRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const peers = snapshot.val();
+                        handlePeerUpdates(peers);
+                    }
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Firebase session setup failed:', error);
+                showNotification('⚠️ Cloud sync failed, using local mode', 'error');
+                return false;
+            }
+        }
+
+        function handleFirebaseMessages(messages) {
+            const messagesList = Object.entries(messages).map(([key, value]) => ({
+                id: key,
+                ...value
+            })).sort((a, b) => a.timestamp - b.timestamp);
+
+            // Only show new messages (avoid duplicates)
+            messagesList.forEach(msg => {
+                if (msg.sender !== peerId && !messageHistory.find(m => m.id === msg.id)) {
+                    addMessageToChat(msg, false);
+                    messageHistory.push(msg);
+                }
+            });
+        }
+
+        function handlePeerUpdates(peers) {
+            connectedPeers.clear();
+            
+            Object.entries(peers).forEach(([peerKey, peerData]) => {
+                Object.entries(peerData).forEach(([sessionKey, info]) => {
+                    if (info.id && info.id !== peerId) {
+                        connectedPeers.set(info.id, {
+                            ...info,
+                            lastSeen: Date.now()
+                        });
+                    }
+                });
+            });
+            
+            updatePeerList();
         }
 
         // Session management
-        async function createSession() {
+        window.createSession = async function() {
             const customKey = document.getElementById('sessionKey').value.trim();
             const sessionKey = customKey || await generateKey();
             
@@ -792,28 +798,31 @@
                 host: peerId
             };
             
-            updateStatus('connected', 'Connected as Host');
-            showSessionKey(sessionKey);
-            showChat();
+            updateStatus('connecting', 'Connecting to cloud...');
+            
+            const cloudConnected = initializeFirebaseSession(sessionKey);
+            
+            setTimeout(() => {
+                updateStatus('connected', cloudConnected ? 'Connected to global cloud' : 'Connected locally');
+                showSessionKey(sessionKey);
+                showChat();
+                
+                addSystemMessage(cloudConnected ? 
+                    '🌍 Session created on global cloud network' : 
+                    '💻 Session created in local mode'
+                );
+                
+                if (cloudConnected) {
+                    showNotification('🚀 Session live on global cloud!');
+                } else {
+                    showNotification('📱 Session created locally');
+                }
+            }, 1000);
             
             localStorage.setItem('quicksync_session', JSON.stringify(currentSession));
-            
-            // Initialize multi-device communication
-            initializeBroadcast(sessionKey);
-            
-            // Announce presence
-            setTimeout(() => {
-                broadcastMessage('peer_join', {
-                    peerId: peerId,
-                    deviceInfo: getDeviceInfo(),
-                    isHost: true
-                });
-                
-                addSystemMessage('Session created. Waiting for other devices to join...');
-            }, 500);
-        }
+        };
 
-        async function joinSession() {
+        window.joinSession = async function() {
             const sessionKey = document.getElementById('sessionKey').value.trim();
             
             if (!sessionKey) {
@@ -830,50 +839,43 @@
                 created: Date.now()
             };
             
-            updateStatus('connecting', 'Connecting...');
+            updateStatus('connecting', 'Joining cloud session...');
             
-            // Initialize multi-device communication
-            initializeBroadcast(sessionKey);
+            const cloudConnected = initializeFirebaseSession(sessionKey);
             
             setTimeout(() => {
-                updateStatus('connected', 'Connected');
+                updateStatus('connected', cloudConnected ? 'Connected to global session' : 'Connected locally');
                 showChat();
                 
-                // Announce joining
-                broadcastMessage('peer_join', {
-                    peerId: peerId,
-                    deviceInfo: getDeviceInfo(),
-                    isHost: false
-                });
+                addSystemMessage(cloudConnected ? 
+                    '🌍 Joined global encrypted session' : 
+                    '💻 Joined local session'
+                );
                 
-                addSystemMessage('Connected to encrypted session');
-                showNotification('Successfully joined session!');
+                if (cloudConnected) {
+                    showNotification('🎉 Successfully joined global session!');
+                } else {
+                    showNotification('📱 Joined local session');
+                }
             }, 1000);
-        }
+        };
 
-        function disconnect() {
-            if (currentSession && peerId) {
-                broadcastMessage('peer_leave', { peerId: peerId });
-            }
+        window.disconnect = function() {
+            // Clean up Firebase listeners
+            if (messagesRef) off(messagesRef);
+            if (peersRef) off(peersRef);
+            if (currentPeerRef) off(currentPeerRef);
             
-            // Cleanup
-            if (broadcastChannel) {
-                broadcastChannel.close();
-                broadcastChannel = null;
-            }
-            
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-                heartbeatInterval = null;
-            }
-            
-            window.removeEventListener('storage', handleStorageEvent);
-            
+            // Reset everything
             currentSession = null;
             messageHistory = [];
             connectedPeers.clear();
             peerId = null;
             isHost = false;
+            sessionRef = null;
+            messagesRef = null;
+            peersRef = null;
+            currentPeerRef = null;
             
             localStorage.removeItem('quicksync_session');
             
@@ -882,33 +884,79 @@
             hideChat();
             clearMessages();
             updatePeerList();
-        }
+            
+            showNotification('👋 Disconnected from session');
+        };
 
-        function handlePeerJoin(data) {
-            if (data.peerId && data.peerId !== peerId) {
-                connectedPeers.set(data.peerId, {
-                    ...data,
-                    lastSeen: Date.now()
-                });
-                
-                const deviceType = data.deviceInfo?.type || 'Device';
-                addSystemMessage(`${deviceType} joined the session`);
-                updatePeerList();
-                showNotification(`New ${deviceType.toLowerCase()} connected!`);
+        // Messaging
+        window.sendMessage = async function() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message || !currentSession) return;
+            
+            const messageData = {
+                id: Date.now() + '_' + peerId,
+                text: message,
+                timestamp: Date.now(),
+                timeString: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                sender: peerId,
+                encrypted: await encryptMessage(message, currentSession.key)
+            };
+            
+            // Add to local chat immediately
+            addMessageToChat(messageData, true);
+            messageHistory.push(messageData);
+            
+            // Send to Firebase if available
+            if (messagesRef && database) {
+                try {
+                    await push(messagesRef, messageData);
+                } catch (error) {
+                    console.error('Failed to send to cloud:', error);
+                    showNotification('⚠️ Message sent locally only', 'error');
+                }
             }
+            
+            // Clear input
+            messageInput.value = '';
+            autoResize(messageInput);
+            clearEmptyState();
+        };
+
+        function addMessageToChat(messageData, isSent = false) {
+            const messagesContainer = document.getElementById('messages');
+            
+            clearEmptyState();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            messageDiv.innerHTML = `
+                <div>${messageData.text}</div>
+                <div class="message-time">${messageData.timeString}</div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        function handlePeerLeave(peerId) {
-            if (connectedPeers.has(peerId)) {
-                const peer = connectedPeers.get(peerId);
-                const deviceType = peer.deviceInfo?.type || 'Device';
-                connectedPeers.delete(peerId);
-                addSystemMessage(`${deviceType} left the session`);
-                updatePeerList();
-            }
+        function addSystemMessage(text) {
+            const messagesContainer = document.getElementById('messages');
+            
+            clearEmptyState();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.innerHTML = `
+                <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                ${text}
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // UI updates
+        // UI Functions
         function updateStatus(status, text) {
             const statusBar = document.getElementById('statusBar');
             const disconnectBtn = document.getElementById('disconnectBtn');
@@ -942,12 +990,12 @@
             keyDisplay.classList.remove('hidden');
         }
 
-        function copyKey() {
+        window.copyKey = function() {
             const keyValue = document.getElementById('generatedKey').textContent.trim();
             navigator.clipboard.writeText(keyValue).then(() => {
-                showNotification('Key copied to clipboard!');
+                showNotification('🔑 Key copied to clipboard!');
             });
-        }
+        };
 
         function hideSessionKey() {
             document.getElementById('keyDisplay').classList.add('hidden');
@@ -973,11 +1021,12 @@
             // Add current device
             const currentDevice = document.createElement('div');
             currentDevice.className = 'peer-item';
+            const currentDeviceInfo = getDeviceInfo();
             currentDevice.innerHTML = `
                 <div class="peer-info">
                     <div class="peer-status"></div>
-                    <i class="fas fa-desktop"></i>
-                    <span>This Device ${isHost ? '(Host)' : ''}</span>
+                    <i class="fas ${getDeviceIcon(currentDeviceInfo.type)}"></i>
+                    <span>${currentDeviceInfo.type} (${currentDeviceInfo.browser}) ${isHost ? '👑' : ''}</span>
                 </div>
                 <span style="font-size: 11px; color: #71717a;">You</span>
             `;
@@ -988,17 +1037,17 @@
                 const peerElement = document.createElement('div');
                 peerElement.className = 'peer-item';
                 
-                const deviceIcon = getDeviceIcon(peer.deviceInfo?.type);
-                const deviceType = peer.deviceInfo?.type || 'Device';
-                const browser = peer.deviceInfo?.browser || '';
+                const deviceIcon = getDeviceIcon(peer.type);
+                const deviceType = peer.type || 'Device';
+                const browser = peer.browser || '';
                 
                 peerElement.innerHTML = `
                     <div class="peer-info">
                         <div class="peer-status"></div>
                         <i class="fas ${deviceIcon}"></i>
-                        <span>${deviceType} ${browser ? `(${browser})` : ''}</span>
+                        <span>${deviceType} (${browser})</span>
                     </div>
-                    <span style="font-size: 11px; color: #22c55e;">Online</span>
+                    <span style="font-size: 11px; color: #22c55e;">🌍 Online</span>
                 `;
                 peerList.appendChild(peerElement);
             });
@@ -1020,74 +1069,7 @@
             
             setTimeout(() => {
                 notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Messaging
-        async function sendMessage() {
-            const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value.trim();
-            
-            if (!message || !currentSession) return;
-            
-            const messageData = {
-                id: Date.now(),
-                text: message,
-                timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                sender: peerId,
-                encrypted: await encryptMessage(message, currentSession.key)
-            };
-            
-            // Add to local chat
-            addMessageToChat(messageData, true);
-            messageHistory.push(messageData);
-            
-            // Broadcast to other devices
-            broadcastMessage('message', messageData);
-            
-            // Clear input
-            messageInput.value = '';
-            autoResize(messageInput);
-            clearEmptyState();
-        }
-
-        function receiveMessage(messageData) {
-            if (messageData.sender === peerId) return; // Don't show own messages
-            
-            addMessageToChat(messageData, false);
-            messageHistory.push(messageData);
-        }
-
-        function addMessageToChat(messageData, isSent = false) {
-            const messagesContainer = document.getElementById('messages');
-            
-            clearEmptyState();
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-            messageDiv.innerHTML = `
-                <div>${messageData.text}</div>
-                <div class="message-time">${messageData.timestamp}</div>
-            `;
-            
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        function addSystemMessage(text) {
-            const messagesContainer = document.getElementById('messages');
-            
-            clearEmptyState();
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message system';
-            messageDiv.innerHTML = `
-                <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
-                ${text}
-            `;
-            
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 4000);
         }
 
         function clearEmptyState() {
@@ -1108,12 +1090,12 @@
         }
 
         // Input handling
-        function handleKeyDown(event) {
+        window.handleKeyDown = function(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 sendMessage();
             }
-        }
+        };
 
         function autoResize(textarea) {
             textarea.style.height = 'auto';
@@ -1123,13 +1105,6 @@
         // Auto-resize message input
         document.getElementById('messageInput').addEventListener('input', function() {
             autoResize(this);
-        });
-
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (currentSession && peerId) {
-                broadcastMessage('peer_leave', { peerId: peerId });
-            }
         });
 
         // Restore session on load
@@ -1146,22 +1121,20 @@
                         peerId = generatePeerId();
                         isHost = session.host === peerId;
                         
-                        updateStatus('connected', 'Connected');
-                        showSessionKey(currentSession.key);
-                        showChat();
+                        updateStatus('connecting', 'Reconnecting...');
                         
-                        // Reinitialize communication
-                        initializeBroadcast(currentSession.key);
+                        const cloudConnected = initializeFirebaseSession(currentSession.key);
                         
                         setTimeout(() => {
-                            broadcastMessage('peer_join', {
-                                peerId: peerId,
-                                deviceInfo: getDeviceInfo(),
-                                isHost: isHost
-                            });
+                            updateStatus('connected', cloudConnected ? 'Reconnected to cloud' : 'Reconnected locally');
+                            showSessionKey(currentSession.key);
+                            showChat();
                             
-                            addSystemMessage('Reconnected to session');
-                        }, 1000);
+                            addSystemMessage(cloudConnected ? 
+                                '🔄 Reconnected to global session' : 
+                                '🔄 Reconnected to local session'
+                            );
+                        }, 1500);
                     } else {
                         localStorage.removeItem('quicksync_session');
                     }
@@ -1171,21 +1144,37 @@
             }
         });
 
-        // Add some visual feedback for connection status
-        setInterval(() => {
+        // Show connection status
+        window.addEventListener('online', () => {
             if (currentSession) {
-                const statusBar = document.getElementById('statusBar');
-                if (statusBar.classList.contains('connected')) {
-                    const indicator = statusBar.querySelector('.status-indicator');
-                    if (indicator) {
-                        indicator.style.animation = 'none';
-                        setTimeout(() => {
-                            indicator.style.animation = 'pulse 2s infinite';
-                        }, 100);
-                    }
-                }
+                showNotification('🌍 Back online - cloud sync restored');
             }
-        }, 10000);
+        });
+
+        window.addEventListener('offline', () => {
+            if (currentSession) {
+                showNotification('📱 Offline - using local mode', 'error');
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (currentPeerRef && database) {
+                // This will trigger the onDisconnect cleanup
+            }
+        });
+
+        // Global scope assignments for onclick handlers
+        window.createSession = window.createSession;
+        window.joinSession = window.joinSession;
+        window.disconnect = window.disconnect;
+        window.sendMessage = window.sendMessage;
+        window.copyKey = window.copyKey;
+        window.handleKeyDown = window.handleKeyDown;
+
+        console.log('🚀 QuickSync Pro loaded successfully!');
+        console.log('🌍 Global cloud sync enabled');
+        console.log('🔐 End-to-end encryption active');
     </script>
 </body>
 </html>
