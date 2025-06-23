@@ -228,14 +228,16 @@
 
         .key-value {
             font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-            font-size: 13px;
+            font-size: 24px;
+            font-weight: 700;
             background: rgba(39, 39, 42, 0.8);
-            padding: 12px;
+            padding: 20px;
             border-radius: 8px;
-            word-break: break-all;
             color: #e4e4e7;
             border: 1px solid rgba(63, 63, 70, 0.2);
             position: relative;
+            text-align: center;
+            letter-spacing: 8px;
         }
 
         .copy-btn {
@@ -534,8 +536,8 @@
             
             <div id="connectionSection" class="input-section">
                 <div class="input-group">
-                    <label class="label" for="sessionKey">Session Key</label>
-                    <input type="text" id="sessionKey" class="input" placeholder="Enter key to join or leave empty to create">
+                    <label class="label" for="sessionKey">Session Code (4 digits)</label>
+                    <input type="text" id="sessionKey" class="input" placeholder="Enter 4-digit code or leave empty to create" maxlength="4" pattern="[0-9]{4}">
                 </div>
                 
                 <div class="button-group">
@@ -555,14 +557,14 @@
             <div id="keyDisplay" class="key-display hidden">
                 <div class="key-label">
                     <i class="fas fa-key"></i>
-                    Your Session Key
+                    Your Session Code
                 </div>
                 <div class="key-value" id="generatedKey">
                     <button class="copy-btn" onclick="copyKey()">
                         <i class="fas fa-copy"></i>
                     </button>
                 </div>
-                <div class="key-info">Share this key with any device/browser to start syncing</div>
+                <div class="key-info">Share this 4-digit code with any device/browser to start syncing</div>
             </div>
             
             <div id="devicesInfo" class="devices-info hidden">
@@ -641,19 +643,20 @@
 
         // Encryption utilities
         async function generateKey() {
-            const array = new Uint8Array(16);
-            crypto.getRandomValues(array);
-            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+            // Generate simple 4-digit code
+            return Math.floor(1000 + Math.random() * 9000).toString();
         }
 
         async function encryptMessage(message, key) {
             const encoder = new TextEncoder();
             const data = encoder.encode(message);
-            const keyData = new Uint8Array(key.match(/.{2}/g).map(byte => parseInt(byte, 16)));
             
+            // Use 4-digit key as seed for encryption
+            const keyNum = parseInt(key);
             const encrypted = new Uint8Array(data.length);
+            
             for (let i = 0; i < data.length; i++) {
-                encrypted[i] = data[i] ^ keyData[i % keyData.length];
+                encrypted[i] = data[i] ^ ((keyNum + i) % 256);
             }
             
             return Array.from(encrypted, byte => byte.toString(16).padStart(2, '0')).join('');
@@ -662,11 +665,11 @@
         async function decryptMessage(encryptedMessage, key) {
             try {
                 const encrypted = new Uint8Array(encryptedMessage.match(/.{2}/g).map(byte => parseInt(byte, 16)));
-                const keyData = new Uint8Array(key.match(/.{2}/g).map(byte => parseInt(byte, 16)));
+                const keyNum = parseInt(key);
                 
                 const decrypted = new Uint8Array(encrypted.length);
                 for (let i = 0; i < encrypted.length; i++) {
-                    decrypted[i] = encrypted[i] ^ keyData[i % keyData.length];
+                    decrypted[i] = encrypted[i] ^ ((keyNum + i) % 256);
                 }
                 
                 return new TextDecoder().decode(decrypted);
@@ -789,6 +792,13 @@
         // Session management
         window.createSession = async function() {
             const customKey = document.getElementById('sessionKey').value.trim();
+            
+            // Validate custom key if provided
+            if (customKey && !/^\d{4}$/.test(customKey)) {
+                showNotification('Session code must be exactly 4 digits', 'error');
+                return;
+            }
+            
             const sessionKey = customKey || await generateKey();
             
             peerId = generatePeerId();
@@ -829,7 +839,12 @@
             const sessionKey = document.getElementById('sessionKey').value.trim();
             
             if (!sessionKey) {
-                showNotification('Please enter a session key', 'error');
+                showNotification('Please enter a 4-digit session code', 'error');
+                return;
+            }
+            
+            if (!/^\d{4}$/.test(sessionKey)) {
+                showNotification('Session code must be exactly 4 digits', 'error');
                 return;
             }
             
@@ -994,9 +1009,9 @@
         }
 
         window.copyKey = function() {
-            const keyValue = document.getElementById('generatedKey').textContent.trim();
+            const keyValue = document.getElementById('generatedKey').textContent.trim().replace(/\s+/g, '');
             navigator.clipboard.writeText(keyValue).then(() => {
-                showNotification('🔑 Key copied to clipboard!');
+                showNotification('🔑 Code copied to clipboard!');
             });
         };
 
