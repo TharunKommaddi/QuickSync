@@ -597,26 +597,29 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
         import { getDatabase, ref, push, onValue, off, serverTimestamp, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
 
-        // Firebase Configuration (Free Tier)
+        // Firebase Configuration - YOUR REAL CONFIG
         const firebaseConfig = {
-            apiKey: "AIzaSyDx1HV7VZ8QK3fJ4nP2wX8YGK5N9M2O1L3",
-            authDomain: "quicksync-demo.firebaseapp.com",
-            databaseURL: "https://quicksync-demo-default-rtdb.firebaseio.com",
-            projectId: "quicksync-demo",
-            storageBucket: "quicksync-demo.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abc123def456"
+            apiKey: "AIzaSyA01YZgPRQpYx8L4JuvCWdbnrqt4S-G1CQ",
+            authDomain: "quicksync-pro.firebaseapp.com",
+            databaseURL: "https://quicksync-pro-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "quicksync-pro",
+            storageBucket: "quicksync-pro.firebasestorage.app",
+            messagingSenderId: "464009944357",
+            appId: "1:464009944357:web:2de88e297da6f35530cecc",
+            measurementId: "G-DQHBT2LCY9"
         };
 
         // Initialize Firebase
         let app, database;
+        
         try {
             app = initializeApp(firebaseConfig);
             database = getDatabase(app);
             console.log('🔥 Firebase initialized successfully');
+            console.log('🌍 Global cloud sync enabled');
         } catch (error) {
             console.error('❌ Firebase initialization failed:', error);
-            // Fallback to localStorage mode
+            console.log('📱 Falling back to local mode');
             database = null;
         }
 
