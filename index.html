@@ -1041,10 +1041,14 @@
         }
 
         function formatMessageContent(text) {
+            // Store original text for copying
+            const originalText = text;
+            
             // Detect and format code blocks (```language\ncode\n```)
             text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
                 const lang = language || 'code';
                 const codeId = 'code_' + Math.random().toString(36).substr(2, 9);
+                // Store original code in data attribute for proper copying
                 return `<div class="code-block ${lang.toLowerCase()}">
                     <div class="code-header">
                         <span class="code-language">${lang}</span>
@@ -1052,7 +1056,7 @@
                             <i class="fas fa-copy"></i> Copy
                         </button>
                     </div>
-                    <pre id="${codeId}">${escapeHtml(code.trim())}</pre>
+                    <pre id="${codeId}" data-original="${escapeForAttribute(code.trim())}">${escapeHtml(code.trim())}</pre>
                 </div>`;
             });
 
@@ -1083,6 +1087,7 @@
                     if (codeLines.length > 1) {
                         const codeId = 'code_' + Math.random().toString(36).substr(2, 9);
                         const detectedLang = detectLanguage(codeLines.join('\n'));
+                        const originalCode = codeLines.join('\n');
                         resultLines.push(`<div class="code-block ${detectedLang}">
                             <div class="code-header">
                                 <span class="code-language">${detectedLang}</span>
@@ -1090,7 +1095,7 @@
                                     <i class="fas fa-copy"></i> Copy
                                 </button>
                             </div>
-                            <pre id="${codeId}">${escapeHtml(codeLines.join('\n'))}</pre>
+                            <pre id="${codeId}" data-original="${escapeForAttribute(originalCode)}">${escapeHtml(originalCode)}</pre>
                         </div>`);
                     } else {
                         resultLines.push(...codeLines);
@@ -1107,6 +1112,7 @@
             if (inCodeBlock && codeLines.length > 1) {
                 const codeId = 'code_' + Math.random().toString(36).substr(2, 9);
                 const detectedLang = detectLanguage(codeLines.join('\n'));
+                const originalCode = codeLines.join('\n');
                 resultLines.push(`<div class="code-block ${detectedLang}">
                     <div class="code-header">
                         <span class="code-language">${detectedLang}</span>
@@ -1114,13 +1120,17 @@
                             <i class="fas fa-copy"></i> Copy
                         </button>
                     </div>
-                    <pre id="${codeId}">${escapeHtml(codeLines.join('\n'))}</pre>
+                    <pre id="${codeId}" data-original="${escapeForAttribute(originalCode)}">${escapeHtml(originalCode)}</pre>
                 </div>`);
             } else if (inCodeBlock) {
                 resultLines.push(...codeLines);
             }
 
             return resultLines.join('\n').replace(/\n/g, '<br>');
+        }
+
+        function escapeForAttribute(text) {
+            return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function detectLanguage(code) {
@@ -1154,9 +1164,19 @@
         window.copyCode = function(codeId) {
             const codeElement = document.getElementById(codeId);
             if (codeElement) {
-                const text = codeElement.textContent;
+                // Try to get original formatting from data attribute first
+                let text = codeElement.getAttribute('data-original');
+                
+                // Fallback to textContent if data-original not available
+                if (!text) {
+                    text = codeElement.textContent || codeElement.innerText;
+                }
+                
+                // Ensure proper line endings and preserve indentation
+                text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                
                 navigator.clipboard.writeText(text).then(() => {
-                    showNotification('📋 Code copied to clipboard!');
+                    showNotification('📋 Code copied with perfect formatting!');
                     
                     // Visual feedback
                     const copyBtn = codeElement.parentNode.querySelector('.code-copy-btn');
@@ -1172,6 +1192,19 @@
                         copyBtn.style.borderColor = 'rgba(99, 102, 241, 0.3)';
                         copyBtn.style.color = '#a5b4fc';
                     }, 2000);
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showNotification('📋 Code copied!');
                 });
             }
         };
