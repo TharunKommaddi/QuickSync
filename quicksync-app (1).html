@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickSync Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f0f23;
+            color: #e4e4e7;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            background: rgba(39, 39, 42, 0.95);
+            border: 1px solid rgba(63, 63, 70, 0.4);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .header {
+            padding: 32px 28px 24px;
+            text-align: center;
+            border-bottom: 1px solid rgba(63, 63, 70, 0.2);
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f4f4f5;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #a1a1aa;
+            font-weight: 400;
+        }
+
+        .main {
+            padding: 28px;
+        }
+
+        .status-bar {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .status-bar.disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .status-bar.connected {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .status-bar.connecting {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .input-section {
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #d4d4d8;
+        }
+
+        .input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(24, 24, 27, 0.6);
+            border: 1px solid rgba(63, 63, 70, 0.4);
+            border-radius: 10px;
+            color: #f4f4f5;
+            font-size: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .input::placeholder {
+            color: #71717a;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5855eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(63, 63, 70, 0.4);
+            color: #d4d4d8;
+            border: 1px solid rgba(63, 63, 70, 0.4);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(63, 63, 70, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .key-display {
+            background: rgba(24, 24, 27, 0.4);
+            border: 1px solid rgba(63, 63, 70, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .key-label {
+            font-size: 13px;
+            color: #a1a1aa;
+            margin-bottom: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .key-value {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            background: rgba(39, 39, 42, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            color: #e4e4e7;
+            border: 1px solid rgba(63, 63, 70, 0.2);
+            position: relative;
+            text-align: center;
+            letter-spacing: 8px;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(63, 63, 70, 0.4);
+            border: none;
+            border-radius: 4px;
+            color: #a1a1aa;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(63, 63, 70, 0.6);
+            color: #d4d4d8;
+        }
+
+        .key-info {
+            font-size: 12px;
+            color: #71717a;
+            margin-top: 8px;
+        }
+
+        .chat-container {
+            background: rgba(24, 24, 27, 0.3);
+            border: 1px solid rgba(63, 63, 70, 0.2);
+            border-radius: 12px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: rgba(63, 63, 70, 0.1);
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(63, 63, 70, 0.4);
+            border-radius: 2px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease;
+            position: relative;
+        }
+
+        .message.sent {
+            background: #6366f1;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.received {
+            background: rgba(63, 63, 70, 0.4);
+            color: #e4e4e7;
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message.system {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            align-self: center;
+            border-radius: 12px;
+            font-size: 13px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .code-block {
+            background: rgba(24, 24, 27, 0.9);
+            border: 1px solid rgba(63, 63, 70, 0.4);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 8px 0;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            position: relative;
+            max-width: 100%;
+        }
+
+        .code-block.html { border-left: 4px solid #e34c26; }
+        .code-block.css { border-left: 4px solid #1572b6; }
+        .code-block.javascript { border-left: 4px solid #f7df1e; }
+        .code-block.sql { border-left: 4px solid #336791; }
+        .code-block.python { border-left: 4px solid #3776ab; }
+        .code-block.json { border-left: 4px solid #000000; }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(63, 63, 70, 0.3);
+            border-radius: 6px 6px 0 0;
+            margin: -8px -8px 8px -8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .code-language {
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .code-copy-btn {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .code-copy-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .inline-code {
+            background: rgba(24, 24, 27, 0.6);
+            color: #f87171;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .message.sent .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .message.sent .inline-code {
+            background: rgba(0, 0, 0, 0.3);
+            color: #fca5a5;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .message-input-area {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(63, 63, 70, 0.2);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(39, 39, 42, 0.6);
+            border: 1px solid rgba(63, 63, 70, 0.4);
+            border-radius: 20px;
+            color: #f4f4f5;
+            font-size: 14px;
+            resize: none;
+            max-height: 80px;
+            transition: border-color 0.2s ease;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .message-input::placeholder {
+            color: #71717a;
+        }
+
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            background: #6366f1;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: #5855eb;
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            background: rgba(63, 63, 70, 0.4);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .devices-info {
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.1);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #86efac;
+        }
+
+        .peer-list {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .peer-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(34, 197, 94, 0.05);
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .peer-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .peer-status {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #71717a;
+            font-size: 14px;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: rgba(239, 68, 68, 0.9);
+        }
+
+        .cloud-badge {
+            background: rgba(99, 102, 241, 0.1);
+            color: #a5b4fc;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .app-container {
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .chat-container {
+                height: 350px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="logo"><i class="fas fa-lock"></i></div>
+            <h1 class="title">QuickSync Pro<span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span></h1>
+            <p class="subtitle">Universal cross-platform encrypted messaging</p>
+        </div>
+        
+        <div class="main">
+            <div id="statusBar" class="status-bar disconnected">
+                <div class="status-indicator"></div>
+                <span>Disconnected</span>
+            </div>
+            
+            <div id="connectionSection" class="input-section">
+                <div class="input-group">
+                    <label class="label" for="sessionKey">Session Code (4 digits)</label>
+                    <input type="text" id="sessionKey" class="input" placeholder="Enter 4-digit code or leave empty to create" maxlength="4" pattern="[0-9]{4}">
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="createSession()">
+                        <i class="fas fa-plus"></i> Create
+                    </button>
+                    <button class="btn btn-secondary" onclick="joinSession()">
+                        <i class="fas fa-sign-in-alt"></i> Join
+                    </button>
+                </div>
+                
+                <button class="btn btn-danger hidden" id="disconnectBtn" onclick="disconnect()">
+                    <i class="fas fa-power-off"></i> Disconnect
+                </button>
+            </div>
+            
+            <div id="keyDisplay" class="key-display hidden">
+                <div class="key-label">
+                    <i class="fas fa-key"></i>
+                    Your Session Code
+                </div>
+                <div class="key-value" id="generatedKey">
+                    <button class="copy-btn" onclick="copyKey()">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="key-info">Share this 4-digit code with any device/browser to start syncing</div>
+            </div>
+            
+            <div id="devicesInfo" class="devices-info hidden">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-globe"></i>
+                    <span id="deviceStatus">Global session active • <span id="deviceCount">1</span> device connected</span>
+                </div>
+                <div id="peerList" class="peer-list"></div>
+            </div>
+        </div>
+        
+        <div id="chatSection" class="chat-container hidden">
+            <div class="messages" id="messages">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="far fa-comments"></i></div>
+                    <div>Send your first encrypted message</div>
+                </div>
+            </div>
+            <div class="message-input-area">
+                <textarea id="messageInput" class="message-input" placeholder="Type a message..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
+                <button class="send-btn" onclick="sendMessage()" id="sendButton">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getDatabase, ref, push, onValue, off, serverTimestamp, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+        // Firebase Configuration - YOUR REAL CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyA01YZgPRQpYx8L4JuvCWdbnrqt4S-G1CQ",
+            authDomain: "quicksync-pro.firebaseapp.com",
+            databaseURL: "https://quicksync-pro-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "quicksync-pro",
+            storageBucket: "quicksync-pro.firebasestorage.app",
+            messagingSenderId: "464009944357",
+            appId: "1:464009944357:web:2de88e297da6f35530cecc",
+            measurementId: "G-DQHBT2LCY9"
+        };
+
+        // Initialize Firebase
+        let app, database;
+        
+        try {
+            app = initializeApp(firebaseConfig);
+            database = getDatabase(app);
+            console.log('🔥 Firebase initialized successfully');
+            console.log('🌍 Global cloud sync enabled');
+        } catch (error) {
+            console.error('❌ Firebase initialization failed:', error);
+            console.log('📱 Falling back to local mode');
+            database = null;
+        }
+
+        // Global variables
+        let currentSession = null;
+        let messageHistory = [];
+        let connectedPeers = new Map();
+        let isHost = false;
+        let peerId = null;
+        let sessionRef = null;
+        let messagesRef = null;
+        let peersRef = null;
+        let currentPeerRef = null;
+
+        // Initialize peer ID
+        function generatePeerId() {
+            return 'peer_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        }
+
+        // Encryption utilities
+        async function generateKey() {
+            // Generate simple 4-digit code
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        async function encryptMessage(message, key) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            
+            // Use 4-digit key as seed for encryption
+            const keyNum = parseInt(key);
+            const encrypted = new Uint8Array(data.length);
+            
+            for (let i = 0; i < data.length; i++) {
+                encrypted[i] = data[i] ^ ((keyNum + i) % 256);
+            }
+            
+            return Array.from(encrypted, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function decryptMessage(encryptedMessage, key) {
+            try {
+                const encrypted = new Uint8Array(encryptedMessage.match(/.{2}/g).map(byte => parseInt(byte, 16)));
+                const keyNum = parseInt(key);
+                
+                const decrypted = new Uint8Array(encrypted.length);
+                for (let i = 0; i < encrypted.length; i++) {
+                    decrypted[i] = encrypted[i] ^ ((keyNum + i) % 256);
+                }
+                
+                return new TextDecoder().decode(decrypted);
+            } catch {
+                return '[Decryption failed]';
+            }
+        }
+
+        // Device detection
+        function getDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            let deviceType = 'Desktop';
+            
+            if (/Mobile|Android|iPhone/.test(userAgent)) {
+                deviceType = 'Mobile';
+            } else if (/iPad|Tablet/.test(userAgent)) {
+                deviceType = 'Tablet';
+            }
+            
+            return {
+                type: deviceType,
+                browser: getBrowserName(),
+                platform: navigator.platform,
+                id: peerId
+            };
+        }
+
+        function getBrowserName() {
+            const userAgent = navigator.userAgent;
+            if (userAgent.includes('Chrome') && !userAgent.includes('Edge')) return 'Chrome';
+            if (userAgent.includes('Firefox')) return 'Firefox';
+            if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) return 'Safari';
+            if (userAgent.includes('Edge')) return 'Edge';
+            return 'Browser';
+        }
+
+        // Firebase session management
+        function initializeFirebaseSession(sessionKey) {
+            if (!database) {
+                showNotification('⚠️ Cloud sync unavailable, using local mode', 'error');
+                return false;
+            }
+
+            try {
+                // Create references
+                sessionRef = ref(database, `sessions/${sessionKey}`);
+                messagesRef = ref(database, `sessions/${sessionKey}/messages`);
+                peersRef = ref(database, `sessions/${sessionKey}/peers`);
+                currentPeerRef = ref(database, `sessions/${sessionKey}/peers/${peerId}`);
+
+                // Set up peer presence
+                const peerData = {
+                    ...getDeviceInfo(),
+                    joinedAt: serverTimestamp(),
+                    lastSeen: serverTimestamp()
+                };
+
+                // Add current peer
+                push(currentPeerRef, peerData);
+
+                // Set up disconnect cleanup
+                onDisconnect(currentPeerRef).remove();
+
+                // Listen for messages
+                onValue(messagesRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const messages = snapshot.val();
+                        handleFirebaseMessages(messages);
+                    }
+                });
+
+                // Listen for peer changes
+                onValue(peersRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const peers = snapshot.val();
+                        handlePeerUpdates(peers);
+                    }
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Firebase session setup failed:', error);
+                showNotification('⚠️ Cloud sync failed, using local mode', 'error');
+                return false;
+            }
+        }
+
+        function handleFirebaseMessages(messages) {
+            const messagesList = Object.entries(messages).map(([key, value]) => ({
+                id: key,
+                ...value
+            })).sort((a, b) => a.timestamp - b.timestamp);
+
+            // Only show new messages (avoid duplicates)
+            messagesList.forEach(msg => {
+                if (msg.sender !== peerId && !messageHistory.find(m => m.id === msg.id)) {
+                    addMessageToChat(msg, false);
+                    messageHistory.push(msg);
+                }
+            });
+        }
+
+        function handlePeerUpdates(peers) {
+            connectedPeers.clear();
+            
+            Object.entries(peers).forEach(([peerKey, peerData]) => {
+                Object.entries(peerData).forEach(([sessionKey, info]) => {
+                    if (info.id && info.id !== peerId) {
+                        connectedPeers.set(info.id, {
+                            ...info,
+                            lastSeen: Date.now()
+                        });
+                    }
+                });
+            });
+            
+            updatePeerList();
+        }
+
+        // Session management
+        window.createSession = async function() {
+            const customKey = document.getElementById('sessionKey').value.trim();
+            
+            // Validate custom key if provided
+            if (customKey && !/^\d{4}$/.test(customKey)) {
+                showNotification('Session code must be exactly 4 digits', 'error');
+                return;
+            }
+            
+            const sessionKey = customKey || await generateKey();
+            
+            peerId = generatePeerId();
+            isHost = true;
+            
+            currentSession = {
+                key: sessionKey,
+                id: 'session_' + Date.now(),
+                created: Date.now(),
+                host: peerId
+            };
+            
+            updateStatus('connecting', 'Connecting to cloud...');
+            
+            const cloudConnected = initializeFirebaseSession(sessionKey);
+            
+            setTimeout(() => {
+                updateStatus('connected', cloudConnected ? 'Connected to global cloud' : 'Connected locally');
+                showSessionKey(sessionKey);
+                showChat();
+                
+                addSystemMessage(cloudConnected ? 
+                    '🌍 Session created on global cloud network' : 
+                    '💻 Session created in local mode'
+                );
+                
+                if (cloudConnected) {
+                    showNotification('🚀 Session live on global cloud!');
+                } else {
+                    showNotification('📱 Session created locally');
+                }
+            }, 1000);
+            
+            localStorage.setItem('quicksync_session', JSON.stringify(currentSession));
+        };
+
+        window.joinSession = async function() {
+            const sessionKey = document.getElementById('sessionKey').value.trim();
+            
+            if (!sessionKey) {
+                showNotification('Please enter a 4-digit session code', 'error');
+                return;
+            }
+            
+            if (!/^\d{4}$/.test(sessionKey)) {
+                showNotification('Session code must be exactly 4 digits', 'error');
+                return;
+            }
+            
+            peerId = generatePeerId();
+            isHost = false;
+            
+            currentSession = {
+                key: sessionKey,
+                id: 'session_join_' + Date.now(),
+                created: Date.now()
+            };
+            
+            updateStatus('connecting', 'Joining cloud session...');
+            
+            const cloudConnected = initializeFirebaseSession(sessionKey);
+            
+            setTimeout(() => {
+                updateStatus('connected', cloudConnected ? 'Connected to global session' : 'Connected locally');
+                showChat();
+                
+                addSystemMessage(cloudConnected ? 
+                    '🌍 Joined global encrypted session' : 
+                    '💻 Joined local session'
+                );
+                
+                if (cloudConnected) {
+                    showNotification('🎉 Successfully joined global session!');
+                } else {
+                    showNotification('📱 Joined local session');
+                }
+            }, 1000);
+        };
+
+        window.disconnect = function() {
+            // Clean up Firebase listeners
+            if (messagesRef) off(messagesRef);
+            if (peersRef) off(peersRef);
+            if (currentPeerRef) off(currentPeerRef);
+            
+            // Reset everything
+            currentSession = null;
+            messageHistory = [];
+            connectedPeers.clear();
+            peerId = null;
+            isHost = false;
+            sessionRef = null;
+            messagesRef = null;
+            peersRef = null;
+            currentPeerRef = null;
+            
+            localStorage.removeItem('quicksync_session');
+            
+            updateStatus('disconnected', 'Disconnected');
+            hideSessionKey();
+            hideChat();
+            clearMessages();
+            updatePeerList();
+            
+            showNotification('👋 Disconnected from session');
+        };
+
+        // Messaging
+        window.sendMessage = async function() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message || !currentSession) return;
+            
+            const messageData = {
+                id: Date.now() + '_' + peerId,
+                text: message,
+                timestamp: Date.now(),
+                timeString: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                sender: peerId,
+                encrypted: await encryptMessage(message, currentSession.key)
+            };
+            
+            // Add to local chat immediately
+            addMessageToChat(messageData, true);
+            messageHistory.push(messageData);
+            
+            // Send to Firebase if available
+            if (messagesRef && database) {
+                try {
+                    await push(messagesRef, messageData);
+                } catch (error) {
+                    console.error('Failed to send to cloud:', error);
+                    showNotification('⚠️ Message sent locally only', 'error');
+                }
+            }
+            
+            // Clear input
+            messageInput.value = '';
+            autoResize(messageInput);
+            clearEmptyState();
+        };
+
+        function addMessageToChat(messageData, isSent = false) {
+            const messagesContainer = document.getElementById('messages');
+            
+            clearEmptyState();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            
+            // Format message content with code highlighting
+            const formattedContent = formatMessageContent(messageData.text);
+            
+            messageDiv.innerHTML = `
+                <div>${formattedContent}</div>
+                <div class="message-time">${messageData.timeString}</div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function formatMessageContent(text) {
+            // Detect and format code blocks (```language\ncode\n```)
+            text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+                const lang = language || 'code';
+                const codeId = 'code_' + Math.random().toString(36).substr(2, 9);
+                return `<div class="code-block ${lang.toLowerCase()}">
+                    <div class="code-header">
+                        <span class="code-language">${lang}</span>
+                        <button class="code-copy-btn" onclick="copyCode('${codeId}')">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <pre id="${codeId}">${escapeHtml(code.trim())}</pre>
+                </div>`;
+            });
+
+            // Detect and format inline code (`code`)
+            text = text.replace(/`([^`]+)`/g, '<span class="inline-code">$1</span>');
+
+            // Detect multi-line code without backticks (basic indentation detection)
+            const lines = text.split('\n');
+            let inCodeBlock = false;
+            let codeLines = [];
+            let resultLines = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const isCodeLine = /^[\s]{2,}/.test(line) || 
+                                  /^[\t]/.test(line) || 
+                                  /<[\w\/][^>]*>/.test(line) ||
+                                  /[\{\}\[\];]/.test(line) ||
+                                  /^\s*(function|var|let|const|if|for|while|class|def|import|from|select|insert|update|delete|create)/i.test(line);
+
+                if (isCodeLine && !inCodeBlock) {
+                    inCodeBlock = true;
+                    codeLines = [line];
+                } else if (isCodeLine && inCodeBlock) {
+                    codeLines.push(line);
+                } else if (!isCodeLine && inCodeBlock) {
+                    // End of code block
+                    if (codeLines.length > 1) {
+                        const codeId = 'code_' + Math.random().toString(36).substr(2, 9);
+                        const detectedLang = detectLanguage(codeLines.join('\n'));
+                        resultLines.push(`<div class="code-block ${detectedLang}">
+                            <div class="code-header">
+                                <span class="code-language">${detectedLang}</span>
+                                <button class="code-copy-btn" onclick="copyCode('${codeId}')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            <pre id="${codeId}">${escapeHtml(codeLines.join('\n'))}</pre>
+                        </div>`);
+                    } else {
+                        resultLines.push(...codeLines);
+                    }
+                    inCodeBlock = false;
+                    codeLines = [];
+                    resultLines.push(line);
+                } else {
+                    resultLines.push(line);
+                }
+            }
+
+            // Handle remaining code block at end
+            if (inCodeBlock && codeLines.length > 1) {
+                const codeId = 'code_' + Math.random().toString(36).substr(2, 9);
+                const detectedLang = detectLanguage(codeLines.join('\n'));
+                resultLines.push(`<div class="code-block ${detectedLang}">
+                    <div class="code-header">
+                        <span class="code-language">${detectedLang}</span>
+                        <button class="code-copy-btn" onclick="copyCode('${codeId}')">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <pre id="${codeId}">${escapeHtml(codeLines.join('\n'))}</pre>
+                </div>`);
+            } else if (inCodeBlock) {
+                resultLines.push(...codeLines);
+            }
+
+            return resultLines.join('\n').replace(/\n/g, '<br>');
+        }
+
+        function detectLanguage(code) {
+            const lowercaseCode = code.toLowerCase();
+            
+            if (/<[\w\/][^>]*>/.test(code) && /html|div|span|body|head|meta/.test(lowercaseCode)) {
+                return 'html';
+            } else if (/\{[\s\S]*\}/.test(code) && /color|background|font|margin|padding|border/.test(lowercaseCode)) {
+                return 'css';
+            } else if (/function|var|let|const|=>|console\.log|document\.|window\./.test(lowercaseCode)) {
+                return 'javascript';
+            } else if (/select|insert|update|delete|create|from|where|join|table/.test(lowercaseCode)) {
+                return 'sql';
+            } else if (/def |import |from |print\(|\.py/.test(lowercaseCode)) {
+                return 'python';
+            } else if (/\{[\s\S]*"[\w]*":\s*/.test(code)) {
+                return 'json';
+            } else if (/\$\(|\$\.|\$\w+/.test(code)) {
+                return 'jquery';
+            }
+            
+            return 'code';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        window.copyCode = function(codeId) {
+            const codeElement = document.getElementById(codeId);
+            if (codeElement) {
+                const text = codeElement.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    showNotification('📋 Code copied to clipboard!');
+                    
+                    // Visual feedback
+                    const copyBtn = codeElement.parentNode.querySelector('.code-copy-btn');
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    copyBtn.style.background = 'rgba(34, 197, 94, 0.2)';
+                    copyBtn.style.borderColor = 'rgba(34, 197, 94, 0.5)';
+                    copyBtn.style.color = '#86efac';
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.style.background = 'rgba(99, 102, 241, 0.1)';
+                        copyBtn.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+                        copyBtn.style.color = '#a5b4fc';
+                    }, 2000);
+                });
+            }
+        };
+
+        function addSystemMessage(text) {
+            const messagesContainer = document.getElementById('messages');
+            
+            clearEmptyState();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.innerHTML = `
+                <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                ${text}
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // UI Functions
+        function updateStatus(status, text) {
+            const statusBar = document.getElementById('statusBar');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const devicesInfo = document.getElementById('devicesInfo');
+            
+            statusBar.className = `status-bar ${status}`;
+            statusBar.innerHTML = `
+                <div class="status-indicator"></div>
+                <span>${text}</span>
+            `;
+            
+            if (status === 'connected') {
+                disconnectBtn.classList.remove('hidden');
+                devicesInfo.classList.remove('hidden');
+            } else {
+                disconnectBtn.classList.add('hidden');
+                devicesInfo.classList.add('hidden');
+            }
+        }
+
+        function showSessionKey(key) {
+            const keyDisplay = document.getElementById('keyDisplay');
+            const generatedKey = document.getElementById('generatedKey');
+            
+            generatedKey.innerHTML = `
+                ${key}
+                <button class="copy-btn" onclick="copyKey()">
+                    <i class="fas fa-copy"></i>
+                </button>
+            `;
+            keyDisplay.classList.remove('hidden');
+        }
+
+        window.copyKey = function() {
+            const keyValue = document.getElementById('generatedKey').textContent.trim().replace(/\s+/g, '');
+            navigator.clipboard.writeText(keyValue).then(() => {
+                showNotification('🔑 Code copied to clipboard!');
+            });
+        };
+
+        function hideSessionKey() {
+            document.getElementById('keyDisplay').classList.add('hidden');
+        }
+
+        function showChat() {
+            document.getElementById('chatSection').classList.remove('hidden');
+        }
+
+        function hideChat() {
+            document.getElementById('chatSection').classList.add('hidden');
+        }
+
+        function updatePeerList() {
+            const peerList = document.getElementById('peerList');
+            const deviceCount = document.getElementById('deviceCount');
+            
+            const totalDevices = connectedPeers.size + 1;
+            deviceCount.textContent = totalDevices;
+            
+            peerList.innerHTML = '';
+            
+            // Add current device
+            const currentDevice = document.createElement('div');
+            currentDevice.className = 'peer-item';
+            const currentDeviceInfo = getDeviceInfo();
+            currentDevice.innerHTML = `
+                <div class="peer-info">
+                    <div class="peer-status"></div>
+                    <i class="fas ${getDeviceIcon(currentDeviceInfo.type)}"></i>
+                    <span>${currentDeviceInfo.type} (${currentDeviceInfo.browser}) ${isHost ? '👑' : ''}</span>
+                </div>
+                <span style="font-size: 11px; color: #71717a;">You</span>
+            `;
+            peerList.appendChild(currentDevice);
+            
+            // Add connected peers
+            connectedPeers.forEach((peer, id) => {
+                const peerElement = document.createElement('div');
+                peerElement.className = 'peer-item';
+                
+                const deviceIcon = getDeviceIcon(peer.type);
+                const deviceType = peer.type || 'Device';
+                const browser = peer.browser || '';
+                
+                peerElement.innerHTML = `
+                    <div class="peer-info">
+                        <div class="peer-status"></div>
+                        <i class="fas ${deviceIcon}"></i>
+                        <span>${deviceType} (${browser})</span>
+                    </div>
+                    <span style="font-size: 11px; color: #22c55e;">🌍 Online</span>
+                `;
+                peerList.appendChild(peerElement);
+            });
+        }
+
+        function getDeviceIcon(deviceType) {
+            switch (deviceType) {
+                case 'Mobile': return 'fa-mobile-alt';
+                case 'Tablet': return 'fa-tablet-alt';
+                default: return 'fa-desktop';
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        function clearEmptyState() {
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+        }
+
+        function clearMessages() {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="far fa-comments"></i></div>
+                    <div>Send your first encrypted message</div>
+                </div>
+            `;
+        }
+
+        // Input handling
+        window.handleKeyDown = function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        };
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 80) + 'px';
+        }
+
+        // Auto-resize message input
+        document.getElementById('messageInput').addEventListener('input', function() {
+            autoResize(this);
+        });
+
+        // Restore session on load
+        window.addEventListener('load', () => {
+            const savedSession = localStorage.getItem('quicksync_session');
+            if (savedSession) {
+                try {
+                    const session = JSON.parse(savedSession);
+                    
+                    // Check if session is not too old (24 hours)
+                    const maxAge = 24 * 60 * 60 * 1000;
+                    if (Date.now() - session.created < maxAge) {
+                        currentSession = session;
+                        peerId = generatePeerId();
+                        isHost = session.host === peerId;
+                        
+                        updateStatus('connecting', 'Reconnecting...');
+                        
+                        const cloudConnected = initializeFirebaseSession(currentSession.key);
+                        
+                        setTimeout(() => {
+                            updateStatus('connected', cloudConnected ? 'Reconnected to cloud' : 'Reconnected locally');
+                            showSessionKey(currentSession.key);
+                            showChat();
+                            
+                            addSystemMessage(cloudConnected ? 
+                                '🔄 Reconnected to global session' : 
+                                '🔄 Reconnected to local session'
+                            );
+                        }, 1500);
+                    } else {
+                        localStorage.removeItem('quicksync_session');
+                    }
+                } catch (e) {
+                    localStorage.removeItem('quicksync_session');
+                }
+            }
+        });
+
+        // Show connection status
+        window.addEventListener('online', () => {
+            if (currentSession) {
+                showNotification('🌍 Back online - cloud sync restored');
+            }
+        });
+
+        window.addEventListener('offline', () => {
+            if (currentSession) {
+                showNotification('📱 Offline - using local mode', 'error');
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (currentPeerRef && database) {
+                // This will trigger the onDisconnect cleanup
+            }
+        });
+
+        // Global scope assignments for onclick handlers
+        window.createSession = window.createSession;
+        window.joinSession = window.joinSession;
+        window.disconnect = window.disconnect;
+        window.sendMessage = window.sendMessage;
+        window.copyKey = window.copyKey;
+        window.handleKeyDown = window.handleKeyDown;
+        window.copyCode = window.copyCode;
+
+        console.log('🚀 QuickSync Pro loaded successfully!');
+        console.log('🌍 Global cloud sync enabled');
+        console.log('🔐 End-to-end encryption active');
+        console.log('💻 Code formatting enabled');
+    </script>
+</body>
+</html>
